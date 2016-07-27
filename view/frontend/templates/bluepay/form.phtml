@@ -1,0 +1,73 @@
+<?PHP
+if ($_POST['payment']['method'] != 'ccpayment')
+    return false;
+if (Mage::getStoreConfig('payment/ccpayment/use_iframe') == '0') {
+    return false;
+}
+$_initial = true;
+$_form = $this;
+$_code = $_form->getMethodCode();
+$_method = $_form->getMethod();
+$_accID = Mage::getStoreConfig('payment/ccpayment/login');
+$_secKey = Mage::getStoreConfig('payment/ccpayment/trans_key');
+$_transType = Mage::getStoreConfig('payment/ccpayment/payment_action');
+$_transMode = Mage::getStoreConfig('payment/ccpayment/test_mode');
+$_cvv2 = Mage::getStoreConfig('payment/ccpayment/useccv');
+$_storeUrl = Mage::getBaseUrl(Mage_Core_Model_Store::URL_TYPE_WEB);
+$totals = Mage::getSingleton('checkout/session')->getQuote()->getTotals();
+$_amount = $totals["grand_total"]->getValue();
+$customerName = Mage::helper('customer')->getCustomerName();
+$address = Mage::getSingleton('checkout/session')->getQuote()->getBillingAddress();
+$billingAddress = $address->getStreetFull();
+$country = $address->getCountryId();
+$city = $address->getCity();
+$state = $address->getRegion();
+$zip = $address->getPostcode();
+$phone = $address->getTelephone();
+$email = $address->getEmail();
+$session = Mage::getSingleton('checkout/session');
+$comment = "";
+foreach ($session->getQuote()->getAllItems() as $item) {
+    $comment .= $item->getQty() . ' ';
+    $comment .= '[' . $item->getSku() . ']' . ' ';
+    $comment .= $item->getName() . ' ';
+    $comment .= $item->getDescription() . ' ';
+    $comment .= $item->getBaseCalculationPrice . ' ';
+}
+$shpfTPS = md5($_secKey . $_amount . $customerName . $city . $state . $zip . $phone . $email);
+$_url = 'https://secure.bluepay.com/interfaces/shpf?SHPF_FORM_ID=magentocc' . 
+	'&SHPF_ACCOUNT_ID=' . urlencode($_accID) . 
+	'&SHPF_TPS_DEF=AMOUNT NAME CITY STATE ZIPCODE PHONE EMAIL' . 
+	'&SHPF_TPS=' . urlencode($shpfTPS) . 
+	'&TRANS_TYPE=' . urlencode($_transType) . 
+	'&KEY=' . urlencode($_secKey) . 
+	'&MODE=' . urlencode($_transMode) . 
+	'&USE_CVV2=' . urlencode($_cvv2) . 
+	'&NAME=' . urlencode($customerName) . 
+	'&STORE_URL=' . urlencode($_storeUrl) . 
+	'&AMOUNT=' . urlencode($_amount) . 
+	'&ADDR1=' . urlencode($billingAddress) . 
+	'&CITY=' . urlencode($city) . 
+	'&STATE=' . urlencode($state) . 
+	'&ZIPCODE=' . urlencode($zip) . 
+	'&COUNTRY=' . urlencode($country) . 
+	'&PHONE=' . urlencode($phone) . 
+	'&EMAIL=' . urlencode($email) .
+	'&PLUGIN_VERSION=1.5.5.2' . 
+	'&COMMENT=' . urlencode($comment);
+?>
+<html>
+  <body>
+  <br /><!-- use css to style this and its contained iframe --><br /><div id="container"></div>
+<script>
+iframeSocket("<?php echo $_url;?>");
+</script>
+<style type="text/css">
+    iframe {
+        width: 100%;
+        height: 125px;
+        border: 0px;
+    }
+</style>
+  </body>
+</html>

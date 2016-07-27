@@ -1,0 +1,27 @@
+{
+    "name": "bluepay/payment",
+    "description": "BluePay credit card & ACH Payment plugin for M2",
+    "type": "magento2-module",
+    "version": "1.0.0",
+    "license": [
+        "OSL-3.0"
+    ],
+    "repositories": [
+        {
+            "type": "git",
+            "url": "https://github.com/jslingerland/BluePay_CreditCard_M2.git"
+        }
+    ],
+    "require": {
+        "php": "~5.5.0|~5.6.0",
+        "magento/magento-composer-installer": "*"
+    },
+    "extra": {
+        "map": [
+            [
+                "*",
+                "BluePay/Payment"
+            ]
+        ]
+    }
+}

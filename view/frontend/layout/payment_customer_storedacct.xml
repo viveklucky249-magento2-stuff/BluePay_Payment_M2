@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<page xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:View/Layout/etc/page_configuration.xsd">
+    <update handle="customer_account"/>
+    <head>
+        <title>Stored Accounts List</title>
+        <link src="BluePay_Payment::js/storedAcct.js"/>
+        <css src="css/styles-m.css" />
+        <css src="css/styles-l.css" media="screen and (min-width: 768px)"/>
+        <css src="css/print.css" media="print" />
+    </head>
+    <body>
+        <referenceContainer name="content">
+            <container name="result_message" label="Main Content Container" htmlTag="div" htmlClass="column content" htmlId="result_message" />
+            <block class="BluePay\Payment\Block\Customer\Form" name="bluepay_payment_customer_storedacct" template="BluePay_Payment::payment-form.phtml" />
+        </referenceContainer>
+    </body>
+</page>
