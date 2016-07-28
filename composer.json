@@ -31,13 +31,5 @@
         "psr-4": {
             "BluePay\\Payment\\": ""
         }
-    },
-    "extra": {
-        "map": [
-            [
-                "*",
-                "BluePay/Payment"
-            ]
-        ]
     }
 }
