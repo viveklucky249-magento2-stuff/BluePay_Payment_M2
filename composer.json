@@ -6,12 +6,6 @@
     "license": [
         "OSL-3.0"
     ],
-    "repositories": [
-        {
-            "type": "git",
-            "url": "https://github.com/jslingerland/BluePay_CreditCard_M2.git"
-        }
-    ],
     "require": {
         "php": ">=5.5.0"
     },
