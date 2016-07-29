@@ -33,22 +33,25 @@ use \Magento\Framework\Event\ObserverInterface;
 /**
  * Response object
  */
-class UpdateOrderStatus implements ObserverInterface {
+class UpdateOrderStatus implements ObserverInterface
+{
 
-	protected $customerRegistry;
+    private $customerRegistry;
 
-	public function __construct(
-		\Magento\Customer\Model\CustomerRegistry $customerRegistry
-	){
-		$this->customerRegistry = $customerRegistry;
-	}
+    public function __construct(
+        \Magento\Customer\Model\CustomerRegistry $customerRegistry
+    ) {
+        $this->customerRegistry = $customerRegistry;
+    }
 
-	public function execute(Observer $observer) {
-		$order = $observer->getEvent()->getOrder();
-		if ($order->getPayment()->getMethodInstance()->getCode() == 'bluepay_payment') {
-			$order->setStatus($order->getPayment()->getMethodInstance()->getConfigData('order_status'));
-			$order->addStatusHistoryComment('Order status changed to ' . $order->getPayment()->getMethodInstance()->getConfigData('order_status'), false);
-			$order->save();
-		}
-	}
+    public function execute(Observer $observer)
+    {
+        $order = $observer->getEvent()->getOrder();
+        if ($order->getPayment()->getMethodInstance()->getCode() == 'bluepay_payment') {
+            $order->setStatus($order->getPayment()->getMethodInstance()->getConfigData('order_status'));
+            $order->addStatusHistoryComment('Order status changed to ' .
+                $order->getPayment()->getMethodInstance()->getConfigData('order_status'), false);
+            $order->save();
+        }
+    }
 }

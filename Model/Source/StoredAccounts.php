@@ -45,17 +45,17 @@ class StoredAccounts extends \Magento\Eav\Model\Entity\Attribute\Source\Abstract
     /**
      * @var \Magento\Eav\Model\ResourceModel\Entity\AttributeFactory
      */
-    protected $_eavAttrEntity;
+    private $_eavAttrEntity;
 
-    protected $_coreRegistry = null;
+    private $_coreRegistry = null;
 
-    protected $_categoryCollection;
+    private $_categoryCollection;
 
-    protected $_customerRepository;
+    private $_customerRepository;
 
-    protected $_customerRegistry;
+    private $_customerRegistry;
 
-    protected $_customer = null;
+    private $_customer = null;
 
     /**
      * @param \Magento\Eav\Model\ResourceModel\Entity\AttributeFactory $eavAttrEntity
@@ -65,8 +65,8 @@ class StoredAccounts extends \Magento\Eav\Model\Entity\Attribute\Source\Abstract
         \Magento\Eav\Model\ResourceModel\Entity\AttributeFactory $eavAttrEntity,
         \Magento\Framework\Registry $registry,
         \Magento\Catalog\Model\ResourceModel\Category\CollectionFactory $categoryCollection,
-         \Magento\Customer\Model\ResourceModel\CustomerRepository $customerRepository,
-         \Magento\Customer\Model\CustomerRegistry $customerRegistry
+        \Magento\Customer\Model\ResourceModel\CustomerRepository $customerRepository,
+        \Magento\Customer\Model\CustomerRegistry $customerRegistry
     ) {
         $this->_eavAttrEntity = $eavAttrEntity;
         $this->_coreRegistry = $registry;
@@ -88,16 +88,18 @@ class StoredAccounts extends \Magento\Eav\Model\Entity\Attribute\Source\Abstract
             $this->_customer = '1';
             $customer = $this->_customerRegistry->retrieve($customerId);
             $customerData = $customer->getDataModel();
-            $paymentAcctString = $customerData->getCustomAttribute($attributeCode) ? $customerData->getCustomAttribute($attributeCode)->getValue() : '';
-            if (strpos($paymentAcctString, '|') !== FALSE) {
+            $paymentAcctString = $customerData->getCustomAttribute($attributeCode) ?
+                $customerData->getCustomAttribute($attributeCode)->getValue() : '';
+            if (strpos($paymentAcctString, '|') !== false) {
                 $this->_options = [];
-                $paymentAccts = explode('|',$paymentAcctString);
-                foreach($paymentAccts as $paymentAcct) {
-                    if (strlen($paymentAcct) < 2)
+                $paymentAccts = explode('|', $paymentAcctString);
+                foreach ($paymentAccts as $paymentAcct) {
+                    if (strlen($paymentAcct) < 2) {
                         continue;
-                    $paymentAccount = explode(',',$paymentAcct);
+                    }
+                    $paymentAccount = explode(',', $paymentAcct);
                     $val = ['label' => __($paymentAccount[0]), 'value' => $paymentAccount[1]];
-                    array_push($this->_options,$val);
+                    array_push($this->_options, $val);
                 }
                 return $this->_options;
             }
@@ -205,59 +207,5 @@ class StoredAccounts extends \Magento\Eav\Model\Entity\Attribute\Source\Abstract
         }
 
         return parent::getIndexOptionText($value);
-    }
-
-    /**
-     * Add Value Sort To Collection Select
-     *
-     * @param \Magento\Eav\Model\Entity\Collection\AbstractCollection $collection
-     * @param string $dir
-     *
-     * @return \Magento\Eav\Model\Entity\Attribute\Source\Boolean
-     */
-    public function addValueSortToCollection($collection, $dir = \Magento\Framework\DB\Select::SQL_ASC)
-    {
-        $attributeCode = $this->getAttribute()->getAttributeCode();
-        $attributeId = $this->getAttribute()->getId();
-        $attributeTable = $this->getAttribute()->getBackend()->getTable();
-
-        if ($this->getAttribute()->isScopeGlobal()) {
-            $tableName = $attributeCode . '_t';
-            $collection->getSelect()
-                ->joinLeft(
-                    [$tableName => $attributeTable],
-                    "e.entity_id={$tableName}.entity_id"
-                    . " AND {$tableName}.attribute_id='{$attributeId}'"
-                    . " AND {$tableName}.store_id='0'",
-                    []
-                );
-            $valueExpr = $tableName . '.value';
-        } else {
-            $valueTable1 = $attributeCode . '_t1';
-            $valueTable2 = $attributeCode . '_t2';
-            $collection->getSelect()
-                ->joinLeft(
-                    [$valueTable1 => $attributeTable],
-                    "e.entity_id={$valueTable1}.entity_id"
-                    . " AND {$valueTable1}.attribute_id='{$attributeId}'"
-                    . " AND {$valueTable1}.store_id='0'",
-                    []
-                )
-                ->joinLeft(
-                    [$valueTable2 => $attributeTable],
-                    "e.entity_id={$valueTable2}.entity_id"
-                    . " AND {$valueTable2}.attribute_id='{$attributeId}'"
-                    . " AND {$valueTable2}.store_id='{$collection->getStoreId()}'",
-                    []
-                );
-            $valueExpr = $collection->getConnection()->getCheckSql(
-                $valueTable2 . '.value_id > 0',
-                $valueTable2 . '.value',
-                $valueTable1 . '.value'
-            );
-        }
-
-        $collection->getSelect()->order($valueExpr . ' ' . $dir);
-        return $this;
     }
 }

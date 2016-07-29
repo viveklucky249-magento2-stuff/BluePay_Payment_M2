@@ -34,14 +34,14 @@ class Factory
      *
      * @var \Magento\Framework\ObjectManagerInterface
      */
-    protected $objectManager;
+    private $objectManager;
 
     /**
      * Instance name to create
      *
      * @var string
      */
-    protected $instanceName;
+    private $instanceName;
 
     /**
      * Factory constructor

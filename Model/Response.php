@@ -27,11 +27,15 @@
 
 namespace BluePay\Payment\Model;
 
-use Magento\Framework\DataObject;
-
-/**
- * Response object
- */
-class Response extends DataObject
+class Response extends \Magento\Framework\DataObject
 {
+    /**
+     * Retrieve response object
+     *
+     * @return \Magento\Framework\App\ResponseInterface
+     */
+    public function getResponse()
+    {
+        return $this->_response;
+    }
 }

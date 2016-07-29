@@ -32,27 +32,27 @@ class Form extends \Magento\Framework\View\Element\Template
     /**
      * @var \Magento\Store\Model\StoreManagerInterface
      */
-    protected $storeManager;
+    private $storeManager;
 
     /**
      * @var \Magento\Framework\App\Config\ScopeConfigInterface
      */
-    protected $scopeConfig;
+    private $scopeConfig;
 
     /**
      * @var \Magento\Checkout\Model\Type\Onepage
      */
-    protected $checkoutTypeOnepage;
+    private $checkoutTypeOnepage;
 
     /**
      * @var \Magento\Payment\Model\Config
      */
-    protected $paymentConfig;
+    private $paymentConfig;
 
     /**
      * @var \Magento\Framework\Event\ManagerInterface
      */
-    protected $eventManager;
+    private $eventManager;
 
     public function __construct(
         \Magento\Store\Model\StoreManagerInterface $storeManager,
@@ -67,18 +67,21 @@ class Form extends \Magento\Framework\View\Element\Template
         $this->paymentConfig = $paymentConfig;
         $this->eventManager = $eventManager;
     }
-    protected function _construct()
+    public function _construct()
     {
         parent::_construct();
-	if ($this->storeManager->getStore()->isAdmin()) {
-		$this->setTemplate('bluepay/payment.phtml');
-		return;
-	}
-	if ($this->scopeConfig->getValue('payment/bluepay_payment/use_iframe', \Magento\Store\Model\ScopeInterface::SCOPE_STORE) == 1) {
-        	$this->setTemplate('bluepay/creditcardiframe.phtml');
-	} else {
-		$this->setTemplate('bluepay/payment.phtml');
-	}
+    if ($this->storeManager->getStore()->isAdmin()) {
+        $this->setTemplate('bluepay/payment.phtml');
+        return;
+    }
+    if ($this->scopeConfig->getValue(
+        'payment/bluepay_payment/use_iframe',
+        \Magento\Store\Model\ScopeInterface::SCOPE_STORE
+    ) == 1) {
+            $this->setTemplate('bluepay/creditcardiframe.phtml');
+    } else {
+        $this->setTemplate('bluepay/payment.phtml');
+    }
     }
   
     public function setMethodInfo()
@@ -96,7 +99,9 @@ class Form extends \Magento\Framework\View\Element\Template
         $method = $this->getData('method');
 
         if (!($method instanceof \Magento\Payment\Model\Method\AbstractMethod)) {
-            throw new \Magento\Framework\Exception\LocalizedException($this->__('Cannot retrieve the payment method model object.'));
+            throw new \Magento\Framework\Exception\LocalizedException($this->__(
+                'Cannot retrieve the payment method model object.'
+            ));
         }
         return $method;
     }
@@ -127,7 +132,7 @@ class Form extends \Magento\Framework\View\Element\Template
      *
      * @return \Magento\Payment\Model\Config
      */
-    protected function _getConfig()
+    public function _getConfig()
     {
         return $this->paymentConfig;
     }
@@ -144,7 +149,7 @@ class Form extends \Magento\Framework\View\Element\Template
             $availableTypes = $method->getConfigData('cctypes');
             if ($availableTypes) {
                 $availableTypes = explode(',', $availableTypes);
-                foreach ($types as $code=>$name) {
+                foreach ($types as $code => $name) {
                     if (!in_array($code, $availableTypes)) {
                         unset($types[$code]);
                     }
@@ -154,7 +159,6 @@ class Form extends \Magento\Framework\View\Element\Template
         return $types;
     }
 
-
     /**
      * Retrieve credit card expire months
      *
@@ -163,7 +167,7 @@ class Form extends \Magento\Framework\View\Element\Template
     public function getCcMonths()
     {
         $months = $this->getData('cc_months');
-        if (is_null($months)) {
+        if ($months === null) {
             $months[0] =  $this->__('Month');
             $months = array_merge($months, $this->_getConfig()->getMonths());
             $this->setData('cc_months', $months);
@@ -179,9 +183,9 @@ class Form extends \Magento\Framework\View\Element\Template
     public function getCcYears()
     {
         $years = $this->getData('cc_years');
-        if (is_null($years)) {
+        if ($years === null) {
             $years = $this->_getConfig()->getYears();
-            $years = array(0=>$this->__('Year'))+$years;
+            $years = [0=>$this->__('Year')]+$years;
             $this->setData('cc_years', $years);
         }
         return $years;
@@ -196,7 +200,7 @@ class Form extends \Magento\Framework\View\Element\Template
     {
         if ($this->getMethod()) {
             $configData = $this->getMethod()->getConfigData('useccv');
-            if(is_null($configData)){
+            if ($configData === null) {
                 return true;
             }
             return (bool) $configData;
@@ -206,51 +210,13 @@ class Form extends \Magento\Framework\View\Element\Template
 
     public function hasVerificationBackend()
     {
-	if ($this->getMethod()) {
+    if ($this->getMethod()) {
             $configData = $this->getMethod()->getConfigData('useccv_backend');
-            if(is_null($configData)){
+            if ($configData === null) {
                 return true;
             }
             return (bool) $configData;
-        }
+    }
         return true;
     }
-
-    /**
-     * Render block HTML
-     *
-     * @return string
-     */
-    protected function _toHtml()
-    {
-        $this->eventManager->dispatch('payment_form_block_to_html_before', array(
-            'block'     => $this
-        ));
-        return parent::_toHtml();
-    }
-
-    public function _prepareLayout()
-    {
-        return parent::_prepareLayout();
-    }
-    public function getViewUrl($event)
-    {
-        return $this->getUrl('giftregistry/customer/viewregistry/', ['event_id' => $event['event_id']]);
-    }
-    public function getBackUrl(){
-        return $this->getUrl('customer/account/index');
-    }
-    public function getNewRegistryUrl(){
-        return $this->getUrl('giftregistry/customer/newregistry');
-    }
-    public function getUpdateUrl(){
-        return $this->getUrl('giftregistry/customer/registry');
-    }
-    public function getEditUrl($event){
-        return $this->getUrl('giftregistry/customer/editregistry',['event_id' => $event['event_id']]);
-    }
-
-
-} 
-
-?>
+}
