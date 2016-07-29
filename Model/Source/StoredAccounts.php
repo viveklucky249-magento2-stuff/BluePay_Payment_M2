@@ -88,17 +88,8 @@ class StoredAccounts extends \Magento\Eav\Model\Entity\Attribute\Source\Abstract
             $this->_customer = '1';
             $customer = $this->_customerRegistry->retrieve($customerId);
             $customerData = $customer->getDataModel();
-<<<<<<< HEAD
             $paymentAcctString = $customerData->getCustomAttribute($attributeCode) ?
                 $customerData->getCustomAttribute($attributeCode)->getValue() : '';
-=======
-<<<<<<< HEAD
-            $paymentAcctString = $customerData->getCustomAttribute($attributeCode) ?
-                $customerData->getCustomAttribute($attributeCode)->getValue() : '';
-=======
-            $paymentAcctString = $customerData->getCustomAttribute($attributeCode) ? $customerData->getCustomAttribute($attributeCode)->getValue() : '';
->>>>>>> origin/master
->>>>>>> origin/master
             if (strpos($paymentAcctString, '|') !== false) {
                 $this->_options = [];
                 $paymentAccts = explode('|', $paymentAcctString);

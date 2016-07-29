@@ -47,21 +47,11 @@ class Config
     public function getActiveMethods($store = null)
     {
         $methods = [];
-<<<<<<< HEAD
-=======
-<<<<<<< HEAD
->>>>>>> origin/master
         $config = $this->scopeConfig->getValue(
             'payment',
             \Magento\Store\Model\ScopeInterface::SCOPE_STORE,
             $store
         );
-<<<<<<< HEAD
-=======
-=======
-        $config = $this->scopeConfig->getValue('payment', \Magento\Store\Model\ScopeInterface::SCOPE_STORE, $store);
->>>>>>> origin/master
->>>>>>> origin/master
         foreach ($config as $code => $methodConfig) {
             if ($this->scopeConfig->getValue(
                 'payment/bluepay_payment/active',
@@ -76,45 +66,17 @@ class Config
     public function getAllMethods($store = null)
     {
         $methods = [];
-<<<<<<< HEAD
-=======
-<<<<<<< HEAD
->>>>>>> origin/master
         $config = $this->scopeConfig->getValue(
             'payment',
             \Magento\Store\Model\ScopeInterface::SCOPE_STORE,
             $store
         );
-<<<<<<< HEAD
-=======
-=======
-        $config = $this->scopeConfig->getValue('payment', \Magento\Store\Model\ScopeInterface::SCOPE_STORE, $store);
->>>>>>> origin/master
->>>>>>> origin/master
         foreach ($config as $code => $methodConfig) {
             $methods[$code] = $this->_getMethod($code, $methodConfig);
         }
         return $methods;
     }
 
-<<<<<<< HEAD
-=======
-<<<<<<< HEAD
-=======
-    protected function _getMethod($code, $config, $store = null)
-    {
-        if (isset(self::$_methods[$code])) {
-            return self::$_methods[$code];
-        }
-        $modelName = $config['model'];
-        $method = Mage::getModel($modelName);
-        $method->setId($code)->setStore($store);
-        self::$_methods[$code] = $method;
-        return self::$_methods[$code];
-    }
-
->>>>>>> origin/master
->>>>>>> origin/master
     public function getAccountTypes()
     {
         $types = ['CHECKING' => 'Checking', 'BUSINESSCHECKING' => 'Business checking', 'SAVINGS' => 'Savings'];
