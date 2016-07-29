@@ -110,12 +110,18 @@ class Request extends \Magento\Framework\App\Action\Action
                  );
                 $result->setHttpResponseCode(\Magento\Framework\Webapi\Response::HTTP_OK);
                 return $result;
+<<<<<<< HEAD
             } catch (\Exception $e) {
                 throw new \Magento\Framework\Validator\Exception\LocalizedException(__($e->getMessage()));
+=======
+            } catch (Exception $e) {
+                throw new \Magento\Framework\Exception\LocalizedException($this->_wrapGatewayError($e->getMessage()));
+>>>>>>> origin/master
             }
         }
     }
 
+<<<<<<< HEAD
     final public function calcTPS($token)
     {
         $hashstr = $this->scopeConfiguration->getValue(
@@ -131,6 +137,14 @@ class Request extends \Magento\Framework\App\Action\Action
             \Magento\Store\Model\ScopeInterface::SCOPE_STORE
         );
         return hash('sha512', $hashstr);
+=======
+    final protected function calcTPS($token)
+    {
+        $hashstr = $this->scopeConfiguration->getValue('payment/bluepay_payment/secret_key', \Magento\Store\Model\ScopeInterface::SCOPE_STORE) .
+            $this->scopeConfiguration->getValue('payment/bluepay_payment/account_id', \Magento\Store\Model\ScopeInterface::SCOPE_STORE) .
+        'AUTH' . '0.00' . $token . $this->scopeConfiguration->getValue('payment/bluepay_payment/trans_mode', \Magento\Store\Model\ScopeInterface::SCOPE_STORE);
+        return bin2hex(md5($hashstr, true));
+>>>>>>> origin/master
     }
 
     public function saveCustomerPaymentInfo($result)
@@ -149,8 +163,12 @@ class Request extends \Magento\Framework\App\Action\Action
         if ($oldToken == '') {
             $paymentAcctString = $result['PAYMENT_TYPE'] == 'ACH' ?
                 $paymentAcctString . $newPaymentAccount . ' - eCheck,' . $newToken . '|' :
+<<<<<<< HEAD
                 $paymentAcctString . $newPaymentAccount . ' - ' .$newCardType . ' [' .
                 $newCcExpMonth . '/' . $newCcExpYear .
+=======
+                $paymentAcctString . $newPaymentAccount . ' - ' .$newCardType . ' [' . $newCcExpMonth . '/' . $newCcExpYear .
+>>>>>>> origin/master
             '],' . $newToken . '|';
         // update an existing payment account
         } else {
@@ -165,11 +183,15 @@ class Request extends \Magento\Framework\App\Action\Action
                     $oldPaymentAccount = explode('-', $oldPaymentString)[0];
                     // gather new ACH info to update payment info in db
                     if (preg_match("/eCheck/i", $oldPaymentString)) {
+<<<<<<< HEAD
                         $newPaymentString = str_replace(
                             trim($oldPaymentAccount),
                             $newPaymentAccount,
                             $oldPaymentString
                         );
+=======
+                        $newPaymentString = str_replace(trim($oldPaymentAccount), $newPaymentAccount, $oldPaymentString);
+>>>>>>> origin/master
                     // gather new CC info to update payment info in db
                     } else {
                         $oldExpMonth = substr(explode('[', ($oldPaymentString))[1], 0, 2);
@@ -177,11 +199,15 @@ class Request extends \Magento\Framework\App\Action\Action
                         $oldCardType = explode('[', (explode('-', $oldPaymentString)[1]))[0];
                         $newPaymentString = str_replace($oldExpMonth, $newCcExpMonth, $oldPaymentString);
                         $newPaymentString = str_replace($oldExpYear, $newCcExpYear, $newPaymentString);
+<<<<<<< HEAD
                         $newPaymentString = str_replace(
                             trim($oldPaymentAccount),
                             $newPaymentAccount,
                             $newPaymentString
                         );
+=======
+                        $newPaymentString = str_replace(trim($oldPaymentAccount), $newPaymentAccount, $newPaymentString);
+>>>>>>> origin/master
                         $newPaymentString = str_replace(trim($oldCardType), $newCardType, $newPaymentString);
                     }
                     $paymentAcctString = str_replace($oldPaymentString, $newPaymentString, $paymentAcctString);

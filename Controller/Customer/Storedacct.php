@@ -10,7 +10,11 @@ class Storedacct extends \Magento\Framework\App\Action\Action
 
     const CURRENT_VERSION = '1.5.5.0';
     /** @var  \Magento\Framework\View\Result\Page */
+<<<<<<< HEAD
     private $resultPageFactory;
+=======
+    protected $resultPageFactory;
+>>>>>>> origin/master
 
     /**
      * @var \Magento\Framework\App\Config\ScopeConfigInterface
@@ -61,6 +65,10 @@ class Storedacct extends \Magento\Framework\App\Action\Action
             'Magento\Framework\View\Element\Messages',
             'result'
         );
+<<<<<<< HEAD
+=======
+        //$messageBlock->addSuccess('Payment account successfully saved.');
+>>>>>>> origin/master
         $messageBlock = $resultPage->getLayout()->getBlock('result');
         if ($messageBlock) {
             $messageBlock->getMessageCollection()->clear();
@@ -76,14 +84,22 @@ class Storedacct extends \Magento\Framework\App\Action\Action
         } elseif ($this->getRequest()->getParams()['result'] == "APPROVED") {
             $messageBlock->addSuccess('Payment account successfully saved.');
         } else {
+<<<<<<< HEAD
 $messageBlock->addError('An error occurred when saving the payment account. Reason: ' .
             $this->getRequest()->getParams()['message']);
+=======
+$messageBlock->addError('An error occurred when saving the payment account. Reason: ' . $this->getRequest()->getParams()['message']);
+>>>>>>> origin/master
         }
         $resultPage->getLayout()->setChild(
             'result_message',
             $messageBlock->getNameInLayout(),
             'result_alias'
         );
+<<<<<<< HEAD
+=======
+        return $resultPage;
+>>>>>>> origin/master
         return $resultPage;
     }
 }

@@ -55,7 +55,11 @@ class Form extends \Magento\Framework\View\Element\Template
         $this->setStoredAccounts($this->getStoredAccounts());
     }
 
+<<<<<<< HEAD
     public function getCcMonths()
+=======
+    protected function getCcMonths()
+>>>>>>> origin/master
     {
         return $this->ccConfig->getCcMonths();
     }
@@ -65,17 +69,27 @@ class Form extends \Magento\Framework\View\Element\Template
      *
      * @return array
      */
+<<<<<<< HEAD
     public function getCcYears()
+=======
+    protected function getCcYears()
+>>>>>>> origin/master
     {
         return $this->ccConfig->getCcYears();
     }
 
+<<<<<<< HEAD
     public function getStoredAccounts()
     {
         $paymentAcctString = $this->customerSession->getCustomerDataObject()
             ->getCustomAttribute('bluepay_stored_accts') ?
             $this->customerSession->getCustomerDataObject()
             ->getCustomAttribute('bluepay_stored_accts')->getValue() : '';
+=======
+    protected function getStoredAccounts()
+    {
+        $paymentAcctString = $this->customerSession->getCustomerDataObject()->getCustomAttribute('bluepay_stored_accts') ? $this->customerSession->getCustomerDataObject()->getCustomAttribute('bluepay_stored_accts')->getValue() : '';
+>>>>>>> origin/master
         $options = [];
         if (strpos($paymentAcctString, '|') !== false) {
             $paymentAccts = explode('|', $paymentAcctString);
@@ -85,6 +99,10 @@ class Form extends \Magento\Framework\View\Element\Template
                 }
                 $paymentAccount = explode(',', $paymentAcct);
                 $val = ['text' => __($paymentAccount[0]), 'value' => $paymentAccount[1]];
+<<<<<<< HEAD
+=======
+                //$val = $paymentAccount;
+>>>>>>> origin/master
                 array_push($options, $val);
             }
         }

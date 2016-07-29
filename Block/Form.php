@@ -74,10 +74,14 @@ class Form extends \Magento\Framework\View\Element\Template
         $this->setTemplate('bluepay/payment.phtml');
         return;
     }
+<<<<<<< HEAD
     if ($this->scopeConfig->getValue(
         'payment/bluepay_payment/use_iframe',
         \Magento\Store\Model\ScopeInterface::SCOPE_STORE
     ) == 1) {
+=======
+    if ($this->scopeConfig->getValue('payment/bluepay_payment/use_iframe', \Magento\Store\Model\ScopeInterface::SCOPE_STORE) == 1) {
+>>>>>>> origin/master
             $this->setTemplate('bluepay/creditcardiframe.phtml');
     } else {
         $this->setTemplate('bluepay/payment.phtml');
@@ -200,7 +204,11 @@ class Form extends \Magento\Framework\View\Element\Template
     {
         if ($this->getMethod()) {
             $configData = $this->getMethod()->getConfigData('useccv');
+<<<<<<< HEAD
             if ($configData === null) {
+=======
+            if (is_null($configData)) {
+>>>>>>> origin/master
                 return true;
             }
             return (bool) $configData;
@@ -212,11 +220,58 @@ class Form extends \Magento\Framework\View\Element\Template
     {
     if ($this->getMethod()) {
             $configData = $this->getMethod()->getConfigData('useccv_backend');
+<<<<<<< HEAD
             if ($configData === null) {
                 return true;
             }
             return (bool) $configData;
     }
         return true;
+=======
+            if (is_null($configData)) {
+                return true;
+            }
+            return (bool) $configData;
+    }
+        return true;
+    }
+
+    /**
+     * Render block HTML
+     *
+     * @return string
+     */
+    protected function _toHtml()
+    {
+        $this->eventManager->dispatch('payment_form_block_to_html_before', [
+            'block'     => $this
+        ]);
+        return parent::_toHtml();
+    }
+
+    public function _prepareLayout()
+    {
+        return parent::_prepareLayout();
+    }
+    public function getViewUrl($event)
+    {
+        return $this->getUrl('giftregistry/customer/viewregistry/', ['event_id' => $event['event_id']]);
+    }
+    public function getBackUrl()
+    {
+        return $this->getUrl('customer/account/index');
+    }
+    public function getNewRegistryUrl()
+    {
+        return $this->getUrl('giftregistry/customer/newregistry');
+    }
+    public function getUpdateUrl()
+    {
+        return $this->getUrl('giftregistry/customer/registry');
+    }
+    public function getEditUrl($event)
+    {
+        return $this->getUrl('giftregistry/customer/editregistry', ['event_id' => $event['event_id']]);
+>>>>>>> origin/master
     }
 }
