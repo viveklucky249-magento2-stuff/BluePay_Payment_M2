@@ -38,16 +38,15 @@ class ConfigProvider implements ConfigProviderInterface
     /**
      * @var \Magento\Framework\App\Config\ScopeConfigInterface
      */
-    protected $scopeConfiguration;
+    private $scopeConfiguration;
 
-    protected $ccConfig;
+    private $ccConfig;
 
-    protected $_customerRepository;
+    private $_customerRepository;
 
-    protected $_coreRegistry = null;
+    private $_coreRegistry = null;
 
-    protected $_customerSession;
-
+    private $_customerSession;
 
     /**
      * @param \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfiguration
@@ -70,22 +69,29 @@ class ConfigProvider implements ConfigProviderInterface
      */
     public function getConfig()
     {
-        $paymentAcctString = $this->_customerSession->getCustomerDataObject()->getCustomAttribute('bluepay_stored_accts') ? $this->_customerSession->getCustomerDataObject()->getCustomAttribute('bluepay_stored_accts')->getValue() : '';
+        $paymentAcctString = $this->_customerSession->getCustomerDataObject()
+            ->getCustomAttribute('bluepay_stored_accts') ?
+            $this->_customerSession->getCustomerDataObject()->getCustomAttribute('bluepay_stored_accts')
+            ->getValue() : '';
         $options = [];
-        if (strpos($paymentAcctString, '|') !== FALSE) {
-                $paymentAccts = explode('|',$paymentAcctString);
-                foreach($paymentAccts as $paymentAcct) {
-                    if (strlen($paymentAcct) < 2)
+        if (strpos($paymentAcctString, '|') !== false) {
+                $paymentAccts = explode('|', $paymentAcctString);
+                foreach ($paymentAccts as $paymentAcct) {
+                    if (strlen($paymentAcct) < 2) {
                         continue;
-                    $paymentAccount = explode(',',$paymentAcct);
+                    }
+                    $paymentAccount = explode(',', $paymentAcct);
                     $val = ['label' => __($paymentAccount[0]), 'value' => $paymentAccount[1]];
-                    array_push($options,$val);
+                    array_push($options, $val);
                 }
-            }
+        }
         $config = [
             'payment' => [
                 'bluepay_payment' => [
-                    'cctypes' => $this->scopeConfiguration->getValue('payment/bluepay_payment/cctypes', \Magento\Store\Model\ScopeInterface::SCOPE_STORE),
+                    'cctypes' => $this->scopeConfiguration->getValue(
+                        'payment/bluepay_payment/cctypes',
+                        \Magento\Store\Model\ScopeInterface::SCOPE_STORE
+                    ),
                     'availableTypes' => $this->getCcAvailableTypes('bluepay_payment'),
                     'months' => $this->getCcMonths(),
                     'years' => $this->getCcYears(),
@@ -93,9 +99,18 @@ class ConfigProvider implements ConfigProviderInterface
                     'hasSsCardType' => $this->hasSsCardType('bluepay_payment'),
                     'ssStartYears' => $this->getSsStartYears(),
                     'cvvImageUrl' => $this->getCvvImageUrl(),
-                    'active' => $this->scopeConfiguration->getValue('payment/bluepay_payment/active', \Magento\Store\Model\ScopeInterface::SCOPE_STORE),
-                    'paymentTypes' => $this->scopeConfiguration->getValue('payment/bluepay_payment/payment_type', \Magento\Store\Model\ScopeInterface::SCOPE_STORE),
-                    'allowAccountsStorage' => $this->scopeConfiguration->getValue('payment/bluepay_payment/tokenization', \Magento\Store\Model\ScopeInterface::SCOPE_STORE),
+                    'active' => $this->scopeConfiguration->getValue(
+                        'payment/bluepay_payment/active',
+                        \Magento\Store\Model\ScopeInterface::SCOPE_STORE
+                    ),
+                    'paymentTypes' => $this->scopeConfiguration->getValue(
+                        'payment/bluepay_payment/payment_type',
+                        \Magento\Store\Model\ScopeInterface::SCOPE_STORE
+                    ),
+                    'allowAccountsStorage' => $this->scopeConfiguration->getValue(
+                        'payment/bluepay_payment/tokenization',
+                        \Magento\Store\Model\ScopeInterface::SCOPE_STORE
+                    ),
                     'storedAccounts' => $options,
                     'isCustomerLoggedIn' => $this->_customerSession->isLoggedIn()
                 ],
@@ -115,7 +130,7 @@ class ConfigProvider implements ConfigProviderInterface
      * @param string $code
      * @return string
      */
-    protected function getInstructions($code)
+    public function getInstructions($code)
     {
         return nl2br($this->escaper->escapeHtml($this->methods[$code]->getInstructions()));
     }
@@ -125,7 +140,7 @@ class ConfigProvider implements ConfigProviderInterface
      *
      * @return array
      */
-    protected function getSsStartYears()
+    public function getSsStartYears()
     {
         return $this->ccConfig->getSsStartYears();
     }
@@ -135,7 +150,7 @@ class ConfigProvider implements ConfigProviderInterface
      *
      * @return array
      */
-    protected function getCcMonths()
+    public function getCcMonths()
     {
         return $this->ccConfig->getCcMonths();
     }
@@ -145,7 +160,7 @@ class ConfigProvider implements ConfigProviderInterface
      *
      * @return array
      */
-    protected function getCcYears()
+    public function getCcYears()
     {
         return $this->ccConfig->getCcYears();
     }
@@ -155,7 +170,7 @@ class ConfigProvider implements ConfigProviderInterface
      *
      * @return string
      */
-    protected function getCvvImageUrl()
+    public function getCvvImageUrl()
     {
         return $this->ccConfig->getCvvImageUrl();
     }
@@ -166,10 +181,14 @@ class ConfigProvider implements ConfigProviderInterface
      * @param string $methodCode
      * @return array
      */
-    protected function getCcAvailableTypes($methodCode)
+    public function getCcAvailableTypes($methodCode)
     {
+        $methodCode = null;
         $types = $this->ccConfig->getCcAvailableTypes();
-        $availableTypes = $this->scopeConfiguration->getValue('payment/bluepay_payment/cctypes', \Magento\Store\Model\ScopeInterface::SCOPE_STORE);
+        $availableTypes = $this->scopeConfiguration->getValue(
+            'payment/bluepay_payment/cctypes',
+            \Magento\Store\Model\ScopeInterface::SCOPE_STORE
+        );
         if ($availableTypes) {
             $availableTypes = explode(',', $availableTypes);
             foreach (array_keys($types) as $code) {
@@ -187,10 +206,14 @@ class ConfigProvider implements ConfigProviderInterface
      * @param string $methodCode
      * @return bool
      */
-    protected function hasVerification($methodCode)
+    public function hasVerification($methodCode)
     {
+        $methodCode = null;
         $result = $this->ccConfig->hasVerification();
-        $configData = $this->scopeConfiguration->getValue('payment/bluepay_payment/useccv', \Magento\Store\Model\ScopeInterface::SCOPE_STORE);
+        $configData = $this->scopeConfiguration->getValue(
+            'payment/bluepay_payment/useccv',
+            \Magento\Store\Model\ScopeInterface::SCOPE_STORE
+        );
         if ($configData !== null) {
             $result = (bool)$configData;
         }
@@ -203,10 +226,14 @@ class ConfigProvider implements ConfigProviderInterface
      * @param string $methodCode
      * @return bool
      */
-    protected function hasSsCardType($methodCode)
+    public function hasSsCardType($methodCode)
     {
+        $methodCode = null;
         $result = false;
-        $availableTypes = explode(',', $this->scopeConfiguration->getValue('payment/bluepay_payment/cctypes', \Magento\Store\Model\ScopeInterface::SCOPE_STORE));
+        $availableTypes = explode(',', $this->scopeConfiguration->getValue(
+            'payment/bluepay_payment/cctypes',
+            \Magento\Store\Model\ScopeInterface::SCOPE_STORE
+        ));
         $ssPresentations = array_intersect(['SS', 'SM', 'SO'], $availableTypes);
         if ($availableTypes && count($ssPresentations) > 0) {
             $result = true;
@@ -219,7 +246,7 @@ class ConfigProvider implements ConfigProviderInterface
      *
      * @return array
      */
-    protected function getIcons()
+    public function getIcons()
     {
         $icons = [];
         $types = $this->ccConfig->getCcAvailableTypes();

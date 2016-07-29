@@ -13,16 +13,15 @@
         }
     ],
     "require": {
-        "php": ">=5.5.0",
-        "magento/magento-composer-installer": "*"
+        "php": ">=5.5.0"
     },
     "authors": [
-      {
-        "name": "Justin Slingerland",
-        "email": "jslingerland@bluepay.com",
-        "homepage": "http://www.bluepay.com",
-        "role": "Developer"
-      }
+        {
+    	    "name": "Justin Slingerland",
+            "email": "jslingerland@bluepay.com",
+            "homepage": "http://www.bluepay.com",
+            "role": "Developer"
+    	}
     ],
     "autoload": {
         "files": [

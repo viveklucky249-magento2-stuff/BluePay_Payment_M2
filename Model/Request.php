@@ -24,14 +24,17 @@
  * @copyright   Copyright (c) 2016 BluePay Processing, LLC (http://www.bluepay.com)
  * @license     http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
-
 namespace BluePay\Payment\Model;
 
-use Magento\Framework\DataObject;
-
-/**
- * Request object
- */
-class Request extends DataObject
+class Request extends \Magento\Framework\DataObject
 {
+    /**
+     * Retrieve request object
+     *
+     * @return \Magento\Framework\App\RequestInterface
+     */
+    public function getRequest()
+    {
+        return $this->_request;
+    }
 }

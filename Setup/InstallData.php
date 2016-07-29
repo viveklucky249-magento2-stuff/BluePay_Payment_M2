@@ -15,11 +15,10 @@ use Magento\Framework\Setup\ModuleDataSetupInterface;
  */
 class InstallData implements InstallDataInterface
 {
-    dfgdfgdfg
     /**
      * @var CustomerSetupFactory
      */
-    protected $customerSetupFactory;
+    private $customerSetupFactory;
     
     /**
      * @var AttributeSetFactory
@@ -37,7 +36,6 @@ class InstallData implements InstallDataInterface
         $this->customerSetupFactory = $customerSetupFactory;
         $this->attributeSetFactory = $attributeSetFactory;
     }
- 
     
     /**
      * {@inheritdoc}
@@ -72,11 +70,10 @@ class InstallData implements InstallDataInterface
         ->addData([
             'attribute_set_id' => $attributeSetId,
             'attribute_group_id' => $attributeGroupId,
-            'used_in_forms' => ['adminhtml_customer'],
+            'is_used_for_customer_segment' => true,
+            'used_in_forms' => ['adminhtml_customer', 'customer_account_edit'],
         ]);
         
         $attribute->save();
-          
-      
     }
 }

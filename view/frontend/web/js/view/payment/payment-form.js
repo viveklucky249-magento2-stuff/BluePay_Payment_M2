@@ -54,12 +54,12 @@ define(
                 return this;
             },
 
-            initialize: function() {
+            initialize: function () {
                 var self = this;
                 this._super();
 
                 //Set credit card number to credit card data object
-                this.creditCardNumber.subscribe(function(value) {
+                this.creditCardNumber.subscribe(function (value) {
                     var result;
                     self.selectedCardType(null);
 
@@ -83,41 +83,48 @@ define(
                 });
 
                 //Set expiration year to credit card data object
-                this.creditCardExpYear.subscribe(function(value) {
+                this.creditCardExpYear.subscribe(function (value) {
                     creditCardData.expirationYear = value;
                 });
 
                 //Set expiration month to credit card data object
-                this.creditCardExpMonth.subscribe(function(value) {
+                this.creditCardExpMonth.subscribe(function (value) {
                     creditCardData.expirationMonth = value;
                 });
 
                 //Set cvv code to credit card data object
-                this.creditCardVerificationNumber.subscribe(function(value) {
+                this.creditCardVerificationNumber.subscribe(function (value) {
                     creditCardData.cvvCode = value;
                 });
 
                 //this.paymentType = window.checkoutConfig.payment.bluepay_payment.paymentTypes;
                 this.paymentType = 'CC';
 
-                this.storedPaymentAccounts.subscribe(function(value) {
+                this.storedPaymentAccounts.subscribe(function (value) {
                     if (value === undefined) {
                         creditCardData.token = '';
                         this.creditCardExpMonth = '';
                         this.creditCardExpYear = '';
                         document.getElementById("bluepay_payment_payment_type").disabled = false;
-                        if (document.getElementById("bluepay_payment_cc_number")) document.getElementById("bluepay_payment_cc_number").value = '';
-                        if (document.getElementById("bluepay_payment_expiration")) document.getElementById("bluepay_payment_expiration").value = '';
-                        if (document.getElementById("bluepay_payment_expiration_yr")) document.getElementById("bluepay_payment_expiration_yr").value = '';
-                        if (document.getElementById("bluepay_payment_echeck_acct_type")) document.getElementById("bluepay_payment_echeck_acct_type").value = 'C';
-                        if (document.getElementById("bluepay_payment_echeck_acct_number")) document.getElementById("bluepay_payment_echeck_acct_number").value = '';
-                        if (document.getElementById("bluepay_payment_echeck_routing_number")) document.getElementById("bluepay_payment_echeck_routing_number").value = '';
-                        if (document.getElementById("bluepay_payment_stored_acct_cb")) document.getElementById("bluepay_payment_stored_acct_cb").disabled = false;
+                        if (document.getElementById("bluepay_payment_cc_number")) {
+    document.getElementById("bluepay_payment_cc_number").value = ''; }
+                        if (document.getElementById("bluepay_payment_expiration")) {
+    document.getElementById("bluepay_payment_expiration").value = ''; }
+                        if (document.getElementById("bluepay_payment_expiration_yr")) {
+    document.getElementById("bluepay_payment_expiration_yr").value = ''; }
+                        if (document.getElementById("bluepay_payment_echeck_acct_type")) {
+    document.getElementById("bluepay_payment_echeck_acct_type").value = 'C'; }
+                        if (document.getElementById("bluepay_payment_echeck_acct_number")) {
+    document.getElementById("bluepay_payment_echeck_acct_number").value = ''; }
+                        if (document.getElementById("bluepay_payment_echeck_routing_number")) {
+    document.getElementById("bluepay_payment_echeck_routing_number").value = ''; }
+                        if (document.getElementById("bluepay_payment_stored_acct_cb")) {
+    document.getElementById("bluepay_payment_stored_acct_cb").disabled = false; }
                         return;
                     }
                     document.getElementById("bluepay_payment_payment_type").disabled = true;
                     document.getElementById("bluepay_payment_stored_acct_cb").disabled = true;
-                    window.checkoutConfig.payment.bluepay_payment.storedAccounts.forEach(function(acct) {
+                    window.checkoutConfig.payment.bluepay_payment.storedAccounts.forEach(function (acct) {
                         if (acct.value == value) {
                             creditCardData.token = value;
                             if (!acct.label.split('-')[1].match("eCheck")) {
@@ -148,28 +155,28 @@ define(
                     });
                 });
 
-                this.saveInfo.subscribe(function(value) {
+                this.saveInfo.subscribe(function (value) {
                     creditCardData.saveInfo = value;
                 });
 
             },
 
-            getCode: function() {
+            getCode: function () {
                 return 'bluepay_payment';
             },
-            getData: function() {
+            getData: function () {
                 creditCardData.saveInfo = document.getElementById("bluepay_payment_stored_acct_cb").value;
                 return {
                     'method': this.item.method,
-                    'additional_data': { 
+                    'additional_data': {
                         'cc_cid': this.creditCardVerificationNumber(),
                         'cc_ss_start_month': this.creditCardSsStartMonth(),
                         'cc_ss_start_year': this.creditCardSsStartYear(),
                         'cc_type': this.creditCardType(),
                         'cc_exp_month': creditCardData.expirationMonth,
                         'cc_exp_year': creditCardData.expirationYear,
-                        'cc_number': creditCardData.creditCardNumber, 
-                        'payment_type': this.getPaymentType(),                    
+                        'cc_number': creditCardData.creditCardNumber,
+                        'payment_type': this.getPaymentType(),
                         'echeck_acct_type': document.getElementById("bluepay_payment_echeck_acct_type").value,
                         'echeck_acct_number': document.getElementById("bluepay_payment_echeck_acct_number").value,
                         'echeck_routing_number': document.getElementById("bluepay_payment_echeck_routing_number").value,
@@ -178,7 +185,7 @@ define(
                     }
                 };
             },
-            getCcAvailableTypes: function() {
+            getCcAvailableTypes: function () {
                 //return window.checkoutConfig.payment.ccform.availableTypes[this.getCode()];
                 return window.checkoutConfig.payment.bluepay_payment.availableTypes;
             },
@@ -187,46 +194,46 @@ define(
                     ? window.checkoutConfig.payment.ccform.icons[type]
                     : false
             },
-            getCcMonths: function() {
+            getCcMonths: function () {
                 //return window.checkoutConfig.payment.ccform.months[this.getCode()];
                 return window.checkoutConfig.payment.bluepay_payment.months;
             },
-            getCcYears: function() {
+            getCcYears: function () {
                 //return window.checkoutConfig.payment.ccform.years[this.getCode()];
                 return window.checkoutConfig.payment.bluepay_payment.years;
             },
-            hasVerification: function() {
+            hasVerification: function () {
                 //return window.checkoutConfig.payment.ccform.hasVerification[this.getCode()];
                 return window.checkoutConfig.payment.bluepay_payment.hasVerification;
             },
-            hasSsCardType: function() {
+            hasSsCardType: function () {
                 //return window.checkoutConfig.payment.ccform.hasSsCardType[this.getCode()];
                 return window.checkoutConfig.payment.bluepay_payment.hasSsCardType;
             },
-            getCvvImageUrl: function() {
+            getCvvImageUrl: function () {
                 //return window.checkoutConfig.payment.ccform.cvvImageUrl[this.getCode()];
                 return window.checkoutConfig.payment.bluepay_payment.cvvImageUrl;
             },
-            getCvvImageHtml: function() {
+            getCvvImageHtml: function () {
                 return '<img src="' + this.getCvvImageUrl()
                     + '" alt="' + $t('Card Verification Number Visual Reference')
                     + '" title="' + $t('Card Verification Number Visual Reference')
                     + '" />';
             },
-            getSsStartYears: function() {
+            getSsStartYears: function () {
                 //return window.checkoutConfig.payment.ccform.ssStartYears[this.getCode()];
                 return window.checkoutConfig.payment.bluepay_payment.ssStartYears;
             },
-            getCcAvailableTypesValues: function() {
-                return _.map(this.getCcAvailableTypes(), function(value, key) {
+            getCcAvailableTypesValues: function () {
+                return _.map(this.getCcAvailableTypes(), function (value, key) {
                     return {
                         'value': key,
                         'type': value
                     }
                 });
             },
-            getCcMonthsValues: function() {
-                return _.map(this.getCcMonths(), function(value, key) {
+            getCcMonthsValues: function () {
+                return _.map(this.getCcMonths(), function (value, key) {
                     if (key < 10) {
                         key = '0' + key;
                     }
@@ -236,26 +243,26 @@ define(
                     }
                 });
             },
-            getCcYearsValues: function() {
-                return _.map(this.getCcYears(), function(value, key) {
+            getCcYearsValues: function () {
+                return _.map(this.getCcYears(), function (value, key) {
                     return {
                         'value': key.substring(2,4),
                         'year': value
                     }
                 });
             },
-            getSsStartYearsValues: function() {
-                return _.map(this.getSsStartYears(), function(value, key) {
+            getSsStartYearsValues: function () {
+                return _.map(this.getSsStartYears(), function (value, key) {
                     return {
                         'value': key,
                         'year': value
                     }
                 });
             },
-            isShowLegend: function() {
+            isShowLegend: function () {
                 return false;
             },
-            getCcTypeTitleByCode: function(code) {
+            getCcTypeTitleByCode: function (code) {
                 var title = '';
                 _.each(this.getCcAvailableTypesValues(), function (value) {
                     if (value['value'] == code) {
@@ -264,36 +271,36 @@ define(
                 });
                 return title;
             },
-            formatDisplayCcNumber: function(number) {
+            formatDisplayCcNumber: function (number) {
                 return 'xxxx-' + number.substr(-4);
             },
-            getInfo: function() {
+            getInfo: function () {
                 return [
                     {'name': 'Credit Card Type', value: this.getCcTypeTitleByCode(this.creditCardType())},
                     {'name': 'Credit Card Number', value: this.formatDisplayCcNumber(this.creditCardNumber())}
                 ];
             },
-            getPaymentTypes: function() {
+            getPaymentTypes: function () {
                 return window.checkoutConfig.payment.bluepay_payment.paymentTypes;
             },
-            getStoredAccounts: function() {
+            getStoredAccounts: function () {
                 return window.checkoutConfig.payment.bluepay_payment.storedAccounts;
             },
-            getStoredAccountsValue: function() {
-                return _.map(this.getStoredAccounts(), function(value, key) {
+            getStoredAccountsValue: function () {
+                return _.map(this.getStoredAccounts(), function (value, key) {
                     return {
                         'value': value.value,
                         'label': value.label
                     }
                 });
             },
-            getPaymentType: function() {
-                if (document.getElementById("bluepay_payment_payment_type"))
-                    this.paymentType = document.getElementById("bluepay_payment_payment_type").value;
+            getPaymentType: function () {
+                if (document.getElementById("bluepay_payment_payment_type")) {
+                    this.paymentType = document.getElementById("bluepay_payment_payment_type").value; }
                 return this.paymentType;
             },
-            initPaymentFields: function() {
-                if (!window.checkoutConfig.payment.bluepay_payment.isCustomerLoggedIn || 
+            initPaymentFields: function () {
+                if (!window.checkoutConfig.payment.bluepay_payment.isCustomerLoggedIn ||
                     window.checkoutConfig.payment.bluepay_payment.allowAccountsStorage == '0') {
                     document.getElementById("bluepay_payment_stored_acct_div").style.display = 'none';
                     document.getElementById("bluepay_payment_stored_acct_cb_div").style.display = 'none';
@@ -312,7 +319,8 @@ define(
     }
 );
 
-function showHidePaymentFields() {
+function showHidePaymentFields()
+{
     if (document.getElementById("bluepay_payment_payment_type").value == 'ACH') {
         document.getElementById("bluepay_payment_cc_types_div").style.display = 'none';
         document.getElementById("bluepay_payment_cc_number_div").style.display = 'none';

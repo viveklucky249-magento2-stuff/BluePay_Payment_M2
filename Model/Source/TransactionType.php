@@ -31,15 +31,15 @@ class TransactionType
 {
     public function toOptionArray()
     {
-        return array(
-            array(
+        return [
+            [
                 'value' => \BluePay\Payment\Model\Payment::ACTION_AUTHORIZE,
                 'label' => __('Authorize Only')
-            ),
-            array(
+            ],
+            [
                 'value' => \BluePay\Payment\Model\Payment::ACTION_AUTHORIZE_CAPTURE,
                 'label' => __('Sale (Authorize & Capture)')
-            ),
-        );
+            ],
+        ];
     }
 }

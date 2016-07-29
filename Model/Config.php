@@ -28,55 +28,58 @@ namespace BluePay\Payment\Model;
  
 class Config
 {
-    protected static $_methods;
+    private static $_methods;
 
     /**
      * @var \Magento\Framework\App\Config\ScopeConfigInterface
      */
-    protected $scopeConfig;
+    private $scopeConfig;
+
+    private $objectManager;
 
     public function __construct(
-        \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig
+        \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig,
+        \Magento\Framework\ObjectManager $objectManager
     ) {
         $this->scopeConfig = $scopeConfig;
+        $this->objectManager= $objectManager;
     }
-    public function getActiveMethods($store=null)
+    public function getActiveMethods($store = null)
     {
-        $methods = array();
-        $config = $this->scopeConfig->getValue('payment', \Magento\Store\Model\ScopeInterface::SCOPE_STORE, $store);
+        $methods = [];
+        $config = $this->scopeConfig->getValue(
+            'payment',
+            \Magento\Store\Model\ScopeInterface::SCOPE_STORE,
+            $store
+        );
         foreach ($config as $code => $methodConfig) {
-            if (Mage::getStoreConfigFlag('bluepay_payment/'.$code.'/active', $store)) {
+            if ($this->scopeConfig->getValue(
+                'payment/bluepay_payment/active',
+                \Magento\Store\Model\ScopeInterface::SCOPE_STORE
+            ) == 1) {
                 $methods[$code] = $this->_getMethod($code, $methodConfig);
             }
         }
         return $methods;
     }
 
-    public function getAllMethods($store=null)
+    public function getAllMethods($store = null)
     {
-        $methods = array();
-        $config = $this->scopeConfig->getValue('payment', \Magento\Store\Model\ScopeInterface::SCOPE_STORE, $store);
+        $methods = [];
+        $config = $this->scopeConfig->getValue(
+            'payment',
+            \Magento\Store\Model\ScopeInterface::SCOPE_STORE,
+            $store
+        );
         foreach ($config as $code => $methodConfig) {
             $methods[$code] = $this->_getMethod($code, $methodConfig);
         }
         return $methods;
     }
 
-    protected function _getMethod($code, $config, $store=null)
-    {
-        if (isset(self::$_methods[$code])) {
-            return self::$_methods[$code];
-        }
-        $modelName = $config['model'];
-        $method = Mage::getModel($modelName);
-        $method->setId($code)->setStore($store);
-        self::$_methods[$code] = $method;
-        return self::$_methods[$code];
-    }
-
     public function getAccountTypes()
     {
-        $types = array('CHECKING' => 'Checking', 'BUSINESSCHECKING' => 'Business checking', 'SAVINGS' => 'Savings');
+        $types = ['CHECKING' => 'Checking', 'BUSINESSCHECKING' => 'Business checking', 'SAVINGS' => 'Savings'];
         return $types;
-    }    
+    }
 }

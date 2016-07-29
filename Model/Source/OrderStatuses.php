@@ -31,27 +31,27 @@ class OrderStatuses
 {
     public function toOptionArray()
     {
-        return array(
-            array(
+        return [
+            [
                 'value' => __('processing'),
                 'label' => 'Processing'
-            ),
-            array(
+            ],
+            [
                 'value' => __('pending'),
                 'label' => 'Pending'
-            ),
-            array(
+            ],
+            [
                 'value' => __('complete'),
                 'label' => 'Complete'
-            ),
-            array(
+            ],
+            [
                 'value' => __('payment_review'),
                 'label' => 'Payment Review'
-            ),
-            array(
+            ],
+            [
                 'value' => __('holded'),
                 'label' => 'On Hold'
-            ),
-        );
+            ],
+        ];
     }
 }

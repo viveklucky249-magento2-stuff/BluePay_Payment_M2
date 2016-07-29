@@ -31,15 +31,15 @@ class TransactionMode
 {
     public function toOptionArray()
     {
-        return array(
-            array(
+        return [
+            [
                 'value' => 'TEST',
                 'label' => __('Test')
-            ),
-            array(
+            ],
+            [
                 'value' => 'LIVE',
                 'label' => __('Live')
-            ),
-        );
+            ],
+        ];
     }
 }

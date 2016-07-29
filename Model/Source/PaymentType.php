@@ -31,19 +31,19 @@ class PaymentType
 {
     public function toOptionArray()
     {
-        return array(
-            array(
+        return [
+            [
                 'value' => 'CCACH',
                 'label' => __('Credit Card & E-Check Enabled')
-            ),
-            array(
+            ],
+            [
                 'value' => 'CC',
                 'label' => __('Credit Card Only')
-            ),
-            array(
+            ],
+            [
                 'value' => 'ACH',
                 'label' => __('E-Check Only')
-            ),
-        );
+            ],
+        ];
     }
 }

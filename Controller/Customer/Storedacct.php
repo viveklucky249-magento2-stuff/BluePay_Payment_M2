@@ -5,26 +5,27 @@ use Magento\Framework\App\Action;
 use Magento\Framework\Exception\NotFoundException;
 use Magento\Framework\Controller\ResultFactory;
 
-class Storedacct extends \Magento\Framework\App\Action\Action {
+class Storedacct extends \Magento\Framework\App\Action\Action
+{
 
     const CURRENT_VERSION = '1.5.5.0';
-	/** @var  \Magento\Framework\View\Result\Page */
-    protected $resultPageFactory;
+    /** @var  \Magento\Framework\View\Result\Page */
+    private $resultPageFactory;
 
     /**
      * @var \Magento\Framework\App\Config\ScopeConfigInterface
      */
-    protected $scopeConfiguration;
+    private $scopeConfiguration;
 
-    protected $request;
+    private $request;
 
-    protected $response;
+    private $response;
 
-    protected $url;
+    private $url;
 
-    protected $customerSession;
+    private $customerSession;
 
-    protected $customerRegistry;
+    private $customerRegistry;
 
     /**      * @param \Magento\Framework\App\Action\Context $context      */
     public function __construct(
@@ -37,7 +38,7 @@ class Storedacct extends \Magento\Framework\App\Action\Action {
         \Magento\Framework\View\Result\PageFactory $resultPageFactory,
         \Magento\Framework\HTTP\ZendClientFactory $zendClientFactory,
         \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfiguration
-        ) {
+    ) {
         parent::__construct($context);
         $this->customerSession = $customerSession;
         $this->customerRegistry = $customerRegistry;
@@ -49,39 +50,40 @@ class Storedacct extends \Magento\Framework\App\Action\Action {
         $this->scopeConfiguration = $scopeConfiguration;
     }
 
-	public function execute() {
-        if(!$this->customerSession->isLoggedIn()) {
+    public function execute()
+    {
+        if (!$this->customerSession->isLoggedIn()) {
             $this->customerSession->setAfterAuthUrl($this->url->getCurrentUrl());
             $this->customerSession->authenticate();
         }
         $resultPage = $this->resultPageFactory->create();
         $messageBlock = $resultPage->getLayout()->createBlock(
-                'Magento\Framework\View\Element\Messages',
-                'result'
-            );
-        //$messageBlock->addSuccess('Payment account successfully saved.');
+            'Magento\Framework\View\Element\Messages',
+            'result'
+        );
         $messageBlock = $resultPage->getLayout()->getBlock('result');
-        if ($messageBlock)
+        if ($messageBlock) {
             $messageBlock->getMessageCollection()->clear();
-        else {
+        } else {
             $messageBlock = $resultPage->getLayout()->createBlock(
                 'Magento\Framework\View\Element\Messages',
                 'result'
             );
         }
         $requestParams = $this->getRequest()->getParams();
-        if (!isset($requestParams['result']) || !isset($requestParams['message']))
+        if (!isset($requestParams['result']) || !isset($requestParams['message'])) {
             return $resultPage;
-        else if ($this->getRequest()->getParams()['result'] == "APPROVED")
+        } elseif ($this->getRequest()->getParams()['result'] == "APPROVED") {
             $messageBlock->addSuccess('Payment account successfully saved.');
-        else
-            $messageBlock->addError('An error occurred when saving the payment account. Reason: ' . $this->getRequest()->getParams()['message']);
+        } else {
+$messageBlock->addError('An error occurred when saving the payment account. Reason: ' .
+            $this->getRequest()->getParams()['message']);
+        }
         $resultPage->getLayout()->setChild(
-                'result_message',
-                $messageBlock->getNameInLayout(),
-                'result_alias'
-            );
+            'result_message',
+            $messageBlock->getNameInLayout(),
+            'result_alias'
+        );
         return $resultPage;
-        return $resultPage;
- 	}
+    }
 }
