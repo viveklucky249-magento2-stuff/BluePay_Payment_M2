@@ -26,11 +26,9 @@ namespace BluePay\Payment\Model\CCPayment;
  * @license     http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
-class Result extends \Magento\Framework\DataObject 
+class Result extends \Magento\Framework\DataObject
 {
         parent::__construct(
             $data
         );
-
-    
 }

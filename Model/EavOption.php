@@ -1,5 +1,6 @@
 <?php
 namespace BluePay\Payment\Setup;
+
 use Magento\Eav\Api\AttributeOptionManagementInterface as AttributeOptionManagementService;
 use Magento\Eav\Api\AttributeRepositoryInterface as AttributeRepository;
 use Magento\Eav\Api\Data\AttributeInterface as Attribute;
@@ -8,6 +9,7 @@ use Magento\Eav\Api\Data\AttributeOptionInterface as AttributeOption;
 use Magento\Eav\Api\Data\AttributeOptionLabelInterfaceFactory as AttributeOptionLabelFactory;
 use Magento\Eav\Api\Data\AttributeOptionLabelInterface as AttributeOptionLabel;
 use Magento\Framework\App\State as AppState;
+
 class EavOptionSetup
 {
     const ADMIN_SCOPE_ID = 0;
@@ -84,7 +86,7 @@ class EavOptionSetup
      */
     private function validateStoreScopeLabels(array $optionLabels)
     {
-        array_map(function($storeId) use ($optionLabels) {
+        array_map(function ($storeId) use ($optionLabels) {
             if (! is_int($storeId)) {
                 throw new \RuntimeException(__(
                     'Store view labels have to be mapped to a numeric store ID, found the array key "%1" for label "%2"',
@@ -123,8 +125,7 @@ class EavOptionSetup
     }
     private function validateAttributeWasReturned($entityTypeCode, $attributeCode, $failMessage)
     {
-        if (
-            !$this->attribute instanceof Attribute ||
+        if (!$this->attribute instanceof Attribute ||
             !$this->attribute->getAttributeId()
         ) {
             throw new \RuntimeException(__(
@@ -193,7 +194,7 @@ class EavOptionSetup
      */
     private function createStoreScopeOptionLabels(array $optionLabels)
     {
-        return array_map(function($storeId) use ($optionLabels) {
+        return array_map(function ($storeId) use ($optionLabels) {
             return $this->createOptionLabel($storeId, $optionLabels[$storeId]);
         }, array_keys($optionLabels));
     }

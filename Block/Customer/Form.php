@@ -34,19 +34,19 @@ class Form extends \Magento\Framework\View\Element\Template
     protected $storeManager;
 
     public function __construct(
-    \Magento\Framework\View\Element\Template\Context $context,
-    \Magento\Customer\Model\Session $customerSession,  
-    \Magento\Framework\ObjectManagerInterface $objectManager,
-    \Magento\Store\Model\StoreManagerInterface $storeManager,
-    CcConfig $ccConfig,
-    array $data = []
+        \Magento\Framework\View\Element\Template\Context $context,
+        \Magento\Customer\Model\Session $customerSession,
+        \Magento\Framework\ObjectManagerInterface $objectManager,
+        \Magento\Store\Model\StoreManagerInterface $storeManager,
+        CcConfig $ccConfig,
+        array $data = []
     ) {
     parent::__construct($context, $data);
     $this->customerSession = $customerSession;
     $this->_objectManager = $objectManager;
     $this->storeManager = $storeManager;
     $this->ccConfig = $ccConfig;
-  }
+    }
 
     public function _prepareLayout()
     {
@@ -56,7 +56,8 @@ class Form extends \Magento\Framework\View\Element\Template
         //return parent::_prepareLayout();
     }
 
-    protected function getCcMonths() {
+    protected function getCcMonths()
+    {
         return $this->ccConfig->getCcMonths();
     }
 
@@ -65,30 +66,32 @@ class Form extends \Magento\Framework\View\Element\Template
      *
      * @return array
      */
-    protected function getCcYears() {
+    protected function getCcYears()
+    {
         return $this->ccConfig->getCcYears();
     }
 
-    protected function getStoredAccounts() {
+    protected function getStoredAccounts()
+    {
         $paymentAcctString = $this->customerSession->getCustomerDataObject()->getCustomAttribute('bluepay_stored_accts') ? $this->customerSession->getCustomerDataObject()->getCustomAttribute('bluepay_stored_accts')->getValue() : '';
         $options = [];
-        if (strpos($paymentAcctString, '|') !== FALSE) {
-            $paymentAccts = explode('|',$paymentAcctString);
-            foreach($paymentAccts as $paymentAcct) {
-                if (strlen($paymentAcct) < 2)
+        if (strpos($paymentAcctString, '|') !== false) {
+            $paymentAccts = explode('|', $paymentAcctString);
+            foreach ($paymentAccts as $paymentAcct) {
+                if (strlen($paymentAcct) < 2) {
                     continue;
-                $paymentAccount = explode(',',$paymentAcct);
+                }
+                $paymentAccount = explode(',', $paymentAcct);
                 $val = ['text' => __($paymentAccount[0]), 'value' => $paymentAccount[1]];
                 //$val = $paymentAccount;
-                array_push($options,$val);
+                array_push($options, $val);
             }
         }
         return $options;
     }
 
-    public function getStoreUrl() {
+    public function getStoreUrl()
+    {
         return $this->storeManager->getStore()->getBaseUrl();
     }
-
-
-} 
+}

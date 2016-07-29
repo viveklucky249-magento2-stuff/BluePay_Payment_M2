@@ -65,8 +65,8 @@ class StoredAccounts extends \Magento\Eav\Model\Entity\Attribute\Source\Abstract
         \Magento\Eav\Model\ResourceModel\Entity\AttributeFactory $eavAttrEntity,
         \Magento\Framework\Registry $registry,
         \Magento\Catalog\Model\ResourceModel\Category\CollectionFactory $categoryCollection,
-         \Magento\Customer\Model\ResourceModel\CustomerRepository $customerRepository,
-         \Magento\Customer\Model\CustomerRegistry $customerRegistry
+        \Magento\Customer\Model\ResourceModel\CustomerRepository $customerRepository,
+        \Magento\Customer\Model\CustomerRegistry $customerRegistry
     ) {
         $this->_eavAttrEntity = $eavAttrEntity;
         $this->_coreRegistry = $registry;
@@ -89,15 +89,16 @@ class StoredAccounts extends \Magento\Eav\Model\Entity\Attribute\Source\Abstract
             $customer = $this->_customerRegistry->retrieve($customerId);
             $customerData = $customer->getDataModel();
             $paymentAcctString = $customerData->getCustomAttribute($attributeCode) ? $customerData->getCustomAttribute($attributeCode)->getValue() : '';
-            if (strpos($paymentAcctString, '|') !== FALSE) {
+            if (strpos($paymentAcctString, '|') !== false) {
                 $this->_options = [];
-                $paymentAccts = explode('|',$paymentAcctString);
-                foreach($paymentAccts as $paymentAcct) {
-                    if (strlen($paymentAcct) < 2)
+                $paymentAccts = explode('|', $paymentAcctString);
+                foreach ($paymentAccts as $paymentAcct) {
+                    if (strlen($paymentAcct) < 2) {
                         continue;
-                    $paymentAccount = explode(',',$paymentAcct);
+                    }
+                    $paymentAccount = explode(',', $paymentAcct);
                     $val = ['label' => __($paymentAccount[0]), 'value' => $paymentAccount[1]];
-                    array_push($this->_options,$val);
+                    array_push($this->_options, $val);
                 }
                 return $this->_options;
             }

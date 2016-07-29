@@ -28,15 +28,15 @@ define(
                 template: 'BluePay_Payment/payment/payment-form'
             },
 
-            getCode: function() {
+            getCode: function () {
                 return 'bluepay_payment';
             },
 
-            isActive: function() {
+            isActive: function () {
                 return true;
             },
 
-            validate: function() {
+            validate: function () {
                 var $form = $('#' + this.getCode() + '-form');
                 return $form.validation() && $form.validation('isValid');
             }

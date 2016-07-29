@@ -62,13 +62,13 @@ class Payment extends \Magento\Payment\Model\Method\Cc
     const RESPONSE_CODE_MISSING  = 'MISSING';
     const RESPONSE_CODE_HELD     = 4;
 
-	protected $responseHeaders;
-	protected $tempVar;
+    protected $responseHeaders;
+    protected $tempVar;
 
     protected $_code  = 'bluepay_payment';
-	//protected $_formBlockType = 'creditcard/form';
-	protected static $_dupe = true;
-	protected static $_underscoreCache = array();
+    //protected $_formBlockType = 'creditcard/form';
+    protected static $_dupe = true;
+    protected static $_underscoreCache = [];
 
     protected $_stripeApi = false;
 
@@ -76,7 +76,7 @@ class Payment extends \Magento\Payment\Model\Method\Cc
 
     protected $_minAmount = null;
     protected $_maxAmount = null;
-    protected $_supportedCurrencyCodes = array('USD');
+    protected $_supportedCurrencyCodes = ['USD'];
 
     /**
      * Availability options
@@ -91,16 +91,16 @@ class Payment extends \Magento\Payment\Model\Method\Cc
     protected $_canUseInternal          = true;
     protected $_canUseCheckout          = true;
     protected $_canUseForMultishipping  = true;
-    protected $_canSaveCc 		= false;
+    protected $_canSaveCc       = false;
 
-    protected $_allowCurrencyCode = array('USD');
+    protected $_allowCurrencyCode = ['USD'];
 
     /**
      * Fields that should be replaced in debug with '***'
      *
      * @var array
      */
-    protected $_debugReplacePrivateDataKeys = array('ach_account');
+    protected $_debugReplacePrivateDataKeys = ['ach_account'];
 
     protected $customerRegistry;
 
@@ -231,7 +231,7 @@ class Payment extends \Magento\Payment\Model\Method\Cc
     /**
      * Send authorize request to gateway
     */
-	
+    
     public function authorize(\Magento\Payment\Model\InfoInterface $payment, $amount)
     {
         if ($amount <= 0) {
@@ -248,22 +248,27 @@ class Payment extends \Magento\Payment\Model\Method\Cc
             ->setCcTransId($result->getRrno())
             ->setCcAvsStatus($result->getAvs())
             ->setCcCidStatus($result->getCvv2());
-		if ($payment->getCcType() == '') $payment->setCcType($result->getCardType());
-		if ($payment->getCcLast4() == '') $payment->setCcLast4(substr($result->getCcNumber(), -4));
+        if ($payment->getCcType() == '') {
+$payment->setCcType($result->getCardType());
+        }
+        if ($payment->getCcLast4() == '') {
+$payment->setCcLast4(substr($result->getCcNumber(), -4));
+        }
         switch ($result->getResult()) {
             case self::RESPONSE_CODE_APPROVED:
-                if ($result->getMessage() != 'DUPLICATE')
+                if ($result->getMessage() != 'DUPLICATE') {
                     $payment->setStatus(self::STATUS_APPROVED);
-                else
+                } else {
                     throw new \Magento\Framework\Exception\LocalizedException(__('Error: ' . $result->getMessage()));
+                }
                 return $this;
             case self::RESPONSE_CODE_DECLINED:
                 throw new \Magento\Framework\Exception\LocalizedException(__('The transaction has been declined'));
-			case self::RESPONSE_CODE_ERROR:
+            case self::RESPONSE_CODE_ERROR:
                 throw new \Magento\Framework\Exception\LocalizedException(__('Error: ' . $result->getMessage()));
             case self::RESPONSE_CODE_MISSING:
                 throw new \Magento\Framework\Exception\LocalizedException(__('Error: ' . $result->getMessage()));
-			default:
+            default:
                 throw new \Magento\Framework\Exception\LocalizedException(__('An error has occured with your payment.'));
         }
     }
@@ -273,20 +278,24 @@ class Payment extends \Magento\Payment\Model\Method\Cc
      */
     public function capture(\Magento\Payment\Model\InfoInterface $payment, $amount)
     {
-	$payment->setAmount($amount);
-	//$result =$this->_checkDuplicate($payment);
+    $payment->setAmount($amount);
+    //$result =$this->_checkDuplicate($payment);
         if ($payment->getCcTransId()) {
             $payment->setTransactionType(self::REQUEST_TYPE_CAPTURE_ONLY);
         } else {
             $payment->setTransactionType(self::REQUEST_TYPE_AUTH_CAPTURE);
         }
-	$payment->setRrno($payment->getCcTransId());
+    $payment->setRrno($payment->getCcTransId());
         $request = $this->_buildRequest($payment);
-        $result = $this->_postRequest($request); 
+        $result = $this->_postRequest($request);
         if ($result->getResult() == self::RESPONSE_CODE_APPROVED) {
             $payment->setStatus(self::STATUS_APPROVED);
-			if ($payment->getCcType() == '') $payment->setCcType($result->getCardType());
-			if ($payment->getCcLast4() == '') $payment->setCcLast4(substr($result->getCcNumber(), -4));
+            if ($payment->getCcType() == '') {
+$payment->setCcType($result->getCardType());
+            }
+            if ($payment->getCcLast4() == '') {
+$payment->setCcLast4(substr($result->getCcNumber(), -4));
+            }
             ////$payment->setCcTransId($result->getTransactionId());
             $payment->setLastTransId($result->getRrno());
             if (!$payment->getParentTransactionId() || $result->getRrno() != $payment->getParentTransactionId()) {
@@ -294,33 +303,33 @@ class Payment extends \Magento\Payment\Model\Method\Cc
             }
             return $this;
         }
-	switch ($result->getResult()) {
-		case self::RESPONSE_CODE_DECLINED:
-			throw new \Magento\Framework\Exception\LocalizedException(__('The transaction has been declined.'));
-		case self::RESPONSE_CODE_ERROR || self::RESPONSE_CODE_MISSING:
-			if ($result->getMessage() == 'Already%20Captured') {
-				$payment->setTransactionType(self::REQUEST_TYPE_AUTH_CAPTURE);
-				$request=$this->_buildRequest($payment);
-				$result =$this->_postRequest($request);
-				        if ($result->getResult() == self::RESPONSE_CODE_APPROVED && $result->getMessage() != 'DUPLICATE') {
-            					$payment->setStatus(self::STATUS_APPROVED);
-            					$payment->setLastTransId($result->getRrno());
-            					if (!$payment->getParentTransactionId() || $result->getRrno() != $payment->getParentTransactionId()) {
-                					$payment->setTransactionId($result->getRrno());
-            					}
-            					return $this;
-        				} else {
-						throw new \Magento\Framework\Exception\LocalizedException(Mage::helper('paygate')->__('Error: ' . $result->getMessage()));
-					}
-			} else {
-				throw new \Magento\Framework\Exception\LocalizedException(__('Error: ' . $result->getMessage()));
-			}
-		default:
-			throw new \Magento\Framework\Exception\LocalizedException(__('An error has occured with your payment.'));
-	}
+    switch ($result->getResult()) {
+        case self::RESPONSE_CODE_DECLINED:
+            throw new \Magento\Framework\Exception\LocalizedException(__('The transaction has been declined.'));
+        case self::RESPONSE_CODE_ERROR || self::RESPONSE_CODE_MISSING:
+            if ($result->getMessage() == 'Already%20Captured') {
+                $payment->setTransactionType(self::REQUEST_TYPE_AUTH_CAPTURE);
+                $request=$this->_buildRequest($payment);
+                $result =$this->_postRequest($request);
+                        if ($result->getResult() == self::RESPONSE_CODE_APPROVED && $result->getMessage() != 'DUPLICATE') {
+                                $payment->setStatus(self::STATUS_APPROVED);
+                                $payment->setLastTransId($result->getRrno());
+                                if (!$payment->getParentTransactionId() || $result->getRrno() != $payment->getParentTransactionId()) {
+                                    $payment->setTransactionId($result->getRrno());
+                                }
+                                return $this;
+                        } else {
+                        throw new \Magento\Framework\Exception\LocalizedException(Mage::helper('paygate')->__('Error: ' . $result->getMessage()));
+                        }
+            } else {
+                throw new \Magento\Framework\Exception\LocalizedException(__('Error: ' . $result->getMessage()));
+            }
+        default:
+            throw new \Magento\Framework\Exception\LocalizedException(__('An error has occured with your payment.'));
+    }
         throw new \Magento\Framework\Exception\LocalizedException(__('Error in capturing the payment.'));
     }
-	
+    
 
     /**
      * Void the payment through gateway
@@ -328,15 +337,15 @@ class Payment extends \Magento\Payment\Model\Method\Cc
     public function void(\Magento\Payment\Model\InfoInterface $payment)
     {
         if ($payment->getParentTransactionId()) {
-			$order = $payment->getOrder();
+            $order = $payment->getOrder();
             $payment->setTransactionType(self::REQUEST_TYPE_CREDIT);
-			$payment->setAmount($amount);
-			$payment->setRrno($payment->getParentTransactionId());
+            $payment->setAmount($amount);
+            $payment->setRrno($payment->getParentTransactionId());
             $request = $this->_buildRequest($payment);
             $result = $this->_postRequest($request);
             if ($result->getResult()==self::RESPONSE_CODE_APPROVED) {
                  $payment->setStatus(self::STATUS_APPROVED);
-				 $order->setState(\Magento\Sales\Model\Order::STATE_CANCELED, true)->save();
+                 $order->setState(\Magento\Sales\Model\Order::STATE_CANCELED, true)->save();
                  return $this;
             }
             $payment->setStatus(self::STATUS_ERROR);
@@ -353,8 +362,8 @@ class Payment extends \Magento\Payment\Model\Method\Cc
     {
         if ($payment->getRefundTransactionId() && $amount > 0) {
             $payment->setTransactionType(self::REQUEST_TYPE_CREDIT);
-			$payment->setRrno($payment->getRefundTransactionId());
-			$payment->setAmount($amount);
+            $payment->setRrno($payment->getRefundTransactionId());
+            $payment->setAmount($amount);
             $request = $this->_buildRequest($payment);
             $request->setRrno($payment->getRefundTransactionId());
             $result = $this->_postRequest($request);
@@ -362,12 +371,12 @@ class Payment extends \Magento\Payment\Model\Method\Cc
                 $payment->setStatus(self::STATUS_SUCCESS);
                 return $this;
             }
-			if ($result->getResult()==self::RESPONSE_CODE_DECLINED) {
+            if ($result->getResult()==self::RESPONSE_CODE_DECLINED) {
                 throw new \Magento\Framework\Exception\LocalizedException($this->_wrapGatewayError('DECLINED'));
             }
-			if ($result->getResult()==self::RESPONSE_CODE_ERROR) {
+            if ($result->getResult()==self::RESPONSE_CODE_ERROR) {
                 throw new \Magento\Framework\Exception\LocalizedException($this->_wrapGatewayError('ERROR'));
-            }			
+            }
             throw new \Magento\Framework\Exception\LocalizedException($this->_wrapGatewayError($result->getRrno()));
         }
         throw new \Magento\Framework\Exception\LocalizedException(__('Error in refunding the payment.'));
@@ -392,21 +401,21 @@ class Payment extends \Magento\Payment\Model\Method\Cc
         }
         $request->setMode(($this->getConfigData('trans_mode') == 'TEST') ? 'TEST' : 'LIVE');
 
-	if ($payment->getToken() != '' && !$payment->getRrno()) {
-	    $request->setRrno($payment->getToken());
-	    //$payment->setRrno($payment->getAdditionalData());
+    if ($payment->getToken() != '' && !$payment->getRrno()) {
+        $request->setRrno($payment->getToken());
+        //$payment->setRrno($payment->getAdditionalData());
         $payment->setRrno($payment->getToken());
-	}
+    }
 
         $request->setMerchant($this->getConfigData('account_id'))
             ->setTransactionType($payment->getTransactionType())
             ->setPaymentType($payment->getPaymentType())
             ->setResponseversion('3')
-			->setTamperProofSeal($this->calcTPS($payment));
-        if($payment->getAmount()){
-            $request->setAmount($payment->getAmount(),2);
+            ->setTamperProofSeal($this->calcTPS($payment));
+        if ($payment->getAmount()) {
+            $request->setAmount($payment->getAmount(), 2);
         }
-        if ($payment->getCcTransId()){
+        if ($payment->getCcTransId()) {
                 $request->setRrno($payment->getCcTransId());
         }
         switch ($payment->getTransactionType()) {
@@ -416,21 +425,20 @@ class Payment extends \Magento\Payment\Model\Method\Cc
                 $request->setRrno($payment->getCcTransId());
                 break;
         }
-		$cart = $this->checkoutCartHelper->getCart()->getItemsCount();
-		$cartSummary = $this->checkoutCartHelper->getCart()->getSummaryQty();
-		$this->generic;
-		$session = $this->checkoutSession;
+        $cart = $this->checkoutCartHelper->getCart()->getItemsCount();
+        $cartSummary = $this->checkoutCartHelper->getCart()->getSummaryQty();
+        $this->generic;
+        $session = $this->checkoutSession;
 
-		$comment = "";
+        $comment = "";
 
-		foreach ($session->getQuote()->getAllItems() as $item) {
-    
-			$comment .= $item->getQty() . ' ';
-			$comment .= '[' . $item->getSku() . ']' . ' ';
-			$comment .= $item->getName() . ' ';
-			$comment .= $item->getDescription() . ' ';
-			$comment .= $item->getAmount() . ' ';
-		}
+        foreach ($session->getQuote()->getAllItems() as $item) {
+            $comment .= $item->getQty() . ' ';
+            $comment .= '[' . $item->getSku() . ']' . ' ';
+            $comment .= $item->getName() . ' ';
+            $comment .= $item->getDescription() . ' ';
+            $comment .= $item->getAmount() . ' ';
+        }
 
         if (!empty($order)) {
             $billing = $order->getBillingAddress();
@@ -454,9 +462,9 @@ class Payment extends \Magento\Payment\Model\Method\Cc
         $info = $this->getInfoInstance();
         switch ($payment->getPaymentType()) {
             case self::REQUEST_METHOD_CC:
-                if($payment->getCcNumber()){
-		    $temp = $payment->getCcExpYear();
-	       	    $CcExpYear = str_split($temp, 2);
+                if ($payment->getCcNumber()) {
+            $temp = $payment->getCcExpYear();
+                $CcExpYear = str_split($temp, 2);
                     $request->setCcNum($payment->getCcNumber())
                         //->setCcExpires(sprintf('%02d%02d', $payment->getCcExpMonth(), $CcExpYear[1]))
                         ->setCcExpires(sprintf('%02d%02d', $payment->getCcExpMonth(), $payment->getCcExpYear()));
@@ -476,39 +484,38 @@ class Payment extends \Magento\Payment\Model\Method\Cc
 
     protected function _postRequest(\Magento\Framework\DataObject $request)
     {
-       	$result = $this->responseFactory->create();
-	if (isset($_POST["?Result"])) {
-		$_POST["Result"] = $_POST["?Result"];
-		unset($_POST["?Result"]);
-	}
-	if (!isset($_POST["Result"])) {
-        	$client = $this->zendClientFactory->create();
-        	$uri = self::CGI_URL;
-        	$client->setUri($uri ? $uri : self::CGI_URL);
-        	$client->setConfig(array(
-            	'maxredirects'=>0,
-            	'timeout'=>15,
-		'useragent'=>'BluePay Magento 2 Payment Plugin/' . self::CURRENT_VERSION,
-       		));
-        	$client->setParameterPost($request->getData());
-		    //$comma_separated = implode(",", $request->getData());
-        	$client->setMethod(\Zend_Http_Client::POST);
-        	try {
-            	    $response = $client->request();
-        	}
-        	catch (Exception $e) {
-            	    $debugData['result'] = $result->getData();
-            	    $this->_debug($debugData);
+        $result = $this->responseFactory->create();
+    if (isset($_POST["?Result"])) {
+        $_POST["Result"] = $_POST["?Result"];
+        unset($_POST["?Result"]);
+    }
+    if (!isset($_POST["Result"])) {
+            $client = $this->zendClientFactory->create();
+            $uri = self::CGI_URL;
+            $client->setUri($uri ? $uri : self::CGI_URL);
+            $client->setConfig([
+                'maxredirects'=>0,
+                'timeout'=>15,
+        'useragent'=>'BluePay Magento 2 Payment Plugin/' . self::CURRENT_VERSION,
+            ]);
+            $client->setParameterPost($request->getData());
+            //$comma_separated = implode(",", $request->getData());
+            $client->setMethod(\Zend_Http_Client::POST);
+            try {
+                    $response = $client->request();
+            } catch (Exception $e) {
+                    $debugData['result'] = $result->getData();
+                    $this->_debug($debugData);
                     throw new \Magento\Framework\Exception\LocalizedException($this->_wrapGatewayError($e->getMessage()));
-        	}
-		$r = substr($response->getHeader('location'), strpos($response->getHeader('location'), "?") + 1);
-        	if ($r) {
+            }
+        $r = substr($response->getHeader('location'), strpos($response->getHeader('location'), "?") + 1);
+            if ($r) {
                     parse_str($r, $responseFromBP);
-            	    isset($responseFromBP["Result"]) ? $result->setResult($responseFromBP["Result"]) : 
+                    isset($responseFromBP["Result"]) ? $result->setResult($responseFromBP["Result"]) :
                         $result->setResult('');
                     isset($responseFromBP["INVOICE_ID"]) ? $result->setInvoiceId($responseFromBP["INVOICE_ID"]) :
                         $result->setInvoiceId('');
-					isset($responseFromBP["BANK_NAME"]) ? $result->setBankName($responseFromBP["BANK_NAME"]) :
+                    isset($responseFromBP["BANK_NAME"]) ? $result->setBankName($responseFromBP["BANK_NAME"]) :
                         $result->setBankName('');
                     isset($responseFromBP["MESSAGE"]) ? $result->setMessage($responseFromBP["MESSAGE"]) :
                         $result->setMessage('');
@@ -532,101 +539,99 @@ class Payment extends \Magento\Payment\Model\Method\Cc
                         $result->setCcExpires('');
                     isset($responseFromBP["CARD_TYPE"]) ? $result->setCardType($responseFromBP["CARD_TYPE"]) :
                         $result->setCardType('');
-		    $this->assignBluePayToken($result->getRrno());
-        	} 
-        	else {
-             	    throw new \Magento\Framework\Exception\LocalizedException(__('Error in payment gateway.'));
-        	}
+            $this->assignBluePayToken($result->getRrno());
+            } else {
+                    throw new \Magento\Framework\Exception\LocalizedException(__('Error in payment gateway.'));
+            }
 
-        	if ($this->getConfigData('debug')) {
+            if ($this->getConfigData('debug')) {
                 $requestDebug = clone $request;
                 foreach ($this->_debugReplacePrivateDataKeys as $key) {
                     if ($requestDebug->hasData($key)) {
                         $requestDebug->setData($key, '***');
                     }
                 }
-                $debugData = array('request' => $requestDebug);
+                $debugData = ['request' => $requestDebug];
                 $debugData['result'] = $result->getData();
                 $this->_debug($debugData);
             }
-	} else {
-		$result->setResult($_POST["Result"]);
-		$result->setMessage($_POST["MESSAGE"]);
-		$result->setRrno($_POST["RRNO"]);
-		$result->setCcNumber($_POST["PAYMENT_ACCOUNT"]);
-		$result->setCcExpMonth($_POST["CC_EXPIRES_MONTH"]);
-		$result->setCcExpYear($_POST["CC_EXPIRES_YEAR"]);
-		$result->setPaymentType($_POST["PAYMENT_TYPE"]);
-		$result->setCardType($_POST["CARD_TYPE"]);
-		$result->setAuthCode($_POST["AUTH_CODE"]);
-		$result->setAvs($_POST["AVS"]);
-		$result->setCvv2($_POST["CVV2"]);
-		$this->assignBluePayToken($result->getRrno());
-
-	}
-        if ($result->getResult() == 'APPROVED') 
+    } else {
+        $result->setResult($_POST["Result"]);
+        $result->setMessage($_POST["MESSAGE"]);
+        $result->setRrno($_POST["RRNO"]);
+        $result->setCcNumber($_POST["PAYMENT_ACCOUNT"]);
+        $result->setCcExpMonth($_POST["CC_EXPIRES_MONTH"]);
+        $result->setCcExpYear($_POST["CC_EXPIRES_YEAR"]);
+        $result->setPaymentType($_POST["PAYMENT_TYPE"]);
+        $result->setCardType($_POST["CARD_TYPE"]);
+        $result->setAuthCode($_POST["AUTH_CODE"]);
+        $result->setAvs($_POST["AVS"]);
+        $result->setCvv2($_POST["CVV2"]);
+        $this->assignBluePayToken($result->getRrno());
+    }
+        if ($result->getResult() == 'APPROVED') {
             $this->saveCustomerPaymentInfo($result);
+        }
         return $result;
     }
 
     protected function _checkDuplicate(\Magento\Payment\Model\InfoInterface $payment)
     {
-	if ($this->getConfigData('duplicate_check') == '0') {
-		return;
-	}
-	$order = $payment->getOrder();
-	$billing = $order->getBillingAddress();
-	$reportStart = date("Y-m-d H:i:s", time() - (3600 * 5) - $this->getConfigData('duplicate_check'));
-	$reportEnd = date("Y-m-d H:i:s", time() - (3600 * 5));
-	$hashstr = $this->getConfigData('secret_key') . $this->getConfigData('account_id') .
-	$reportStart . $reportEnd;
-	$request = $this->requestFactory->create();
+    if ($this->getConfigData('duplicate_check') == '0') {
+        return;
+    }
+    $order = $payment->getOrder();
+    $billing = $order->getBillingAddress();
+    $reportStart = date("Y-m-d H:i:s", time() - (3600 * 5) - $this->getConfigData('duplicate_check'));
+    $reportEnd = date("Y-m-d H:i:s", time() - (3600 * 5));
+    $hashstr = $this->getConfigData('secret_key') . $this->getConfigData('account_id') .
+    $reportStart . $reportEnd;
+    $request = $this->requestFactory->create();
         $request->setData("MODE", $this->getConfigData('trans_mode') == 'TEST' ? 'TEST' : 'LIVE');
         $request->setData("TAMPER_PROOF_SEAL", bin2hex(md5($hashstr, true)));
-	$request->setData("ACCOUNT_ID", $this->getConfigData('account_id'));
-	$request->setData("REPORT_START_DATE", $reportStart);
-	$request->setData("REPORT_END_DATE", $reportEnd);
-	$request->setData("EXCLUDE_ERRORS", 1);
-	$request->setData("ISNULL_f_void", 1);
-	$request->setData("name1", $billing['firstname']);
-	$request->setData("name2", $billing['lastname']);
-	$request->setData("amount", $payment->getAmount());
-	$request->setData("status", '1');
-	$request->setData("IGNORE_NULL_STR", '0');
-	$request->setData("trans_type", "SALE");
- 	$client = $this->zendClientFactory->create();
+    $request->setData("ACCOUNT_ID", $this->getConfigData('account_id'));
+    $request->setData("REPORT_START_DATE", $reportStart);
+    $request->setData("REPORT_END_DATE", $reportEnd);
+    $request->setData("EXCLUDE_ERRORS", 1);
+    $request->setData("ISNULL_f_void", 1);
+    $request->setData("name1", $billing['firstname']);
+    $request->setData("name2", $billing['lastname']);
+    $request->setData("amount", $payment->getAmount());
+    $request->setData("status", '1');
+    $request->setData("IGNORE_NULL_STR", '0');
+    $request->setData("trans_type", "SALE");
+    $client = $this->zendClientFactory->create();
 
         $client->setUri($uri ? $uri : self::STQ_URL);
-        $client->setConfig(array(
+        $client->setConfig([
             'maxredirects'=>0,
             'timeout'=>30,
-        ));
+        ]);
         $client->setParameterPost($request->getData());
         $client->setMethod(\Zend_Http_Client::POST);
         try {
             $response = $client->request();
-        }
-        catch (Exception $e) {
-
+        } catch (Exception $e) {
             $this->_debug($debugData);
             throw new \Magento\Framework\Exception\LocalizedException($this->_wrapGatewayError($e->getMessage()));
         }
-	$p = parse_str($client->request()->getBody());
+    $p = parse_str($client->request()->getBody());
         if ($id) {
-	    $conn = $this->resourceConnection->getConnection('core_read'); 
-	    $result = $conn->fetchAll("SELECT * FROM sales_payment_transaction WHERE txn_id='$id'");
-	    if ($result)
-		return;
-	    self::$_dupe = true;
-	    $payment->setTransactionType(self::REQUEST_TYPE_CREDIT);
+        $conn = $this->resourceConnection->getConnection('core_read');
+        $result = $conn->fetchAll("SELECT * FROM sales_payment_transaction WHERE txn_id='$id'");
+        if ($result) {
+        return;
+        }
+        self::$_dupe = true;
+        $payment->setTransactionType(self::REQUEST_TYPE_CREDIT);
         $payment->setCcTransId($id);
-	    $payment->setRrno($id);
+        $payment->setRrno($id);
         $request = $this->_buildRequest($payment);
         $result = $this->_postRequest($request);
-	    $payment->setCcTransId('');
-        } 
+        $payment->setCcTransId('');
+        }
     }
-	
+    
 
     /**
      * Gateway response wrapper
@@ -635,26 +640,28 @@ class Payment extends \Magento\Payment\Model\Method\Cc
     {
         return Mage::helper('paygate')->__('Gateway error: %s', $text);
     }
-	
-	protected final function calcTPS(\Magento\Payment\Model\InfoInterface $payment) {
-	
-		$order = $payment->getOrder();
-		$billing = $order->getBillingAddress();
+    
+    final protected function calcTPS(\Magento\Payment\Model\InfoInterface $payment)
+    {
+    
+        $order = $payment->getOrder();
+        $billing = $order->getBillingAddress();
 
-		$hashstr = $this->getConfigData('secret_key') . $this->getConfigData('account_id') . 
-		$payment->getTransactionType() . $payment->getAmount() . $payment->getRrno() . 
-		$this->getConfigData('trans_mode');
-		return bin2hex( md5($hashstr, true) );
-	}	
+        $hashstr = $this->getConfigData('secret_key') . $this->getConfigData('account_id') .
+        $payment->getTransactionType() . $payment->getAmount() . $payment->getRrno() .
+        $this->getConfigData('trans_mode');
+        return bin2hex(md5($hashstr, true));
+    }
  
-	protected function parseHeader($header, $nameVal, $pos) {
-		$nameVal = ($nameVal == 'name') ? '0' : '1';
-		$s = explode("?", $header);
-		$t = explode("&", $s[1]);
-		$value = explode("=", $t[$pos]);
-		return $value[$nameVal];
-	}
-	
+    protected function parseHeader($header, $nameVal, $pos)
+    {
+        $nameVal = ($nameVal == 'name') ? '0' : '1';
+        $s = explode("?", $header);
+        $t = explode("&", $s[1]);
+        $value = explode("=", $t[$pos]);
+        return $value[$nameVal];
+    }
+    
     public function validate()
     {
         $info = $this->getInfoInstance();
@@ -668,7 +675,7 @@ class Payment extends \Magento\Payment\Model\Method\Cc
             return $this;
         }
         $errorMsg = false;
-        $availableTypes = explode(',',$this->getConfigData('cctypes'));
+        $availableTypes = explode(',', $this->getConfigData('cctypes'));
 
         $ccNumber = $info->getCcNumber();
         // remove credit card number delimiters such as "-" and space
@@ -679,20 +686,19 @@ class Payment extends \Magento\Payment\Model\Method\Cc
         }
         if ($info->getPaymentType() == 'CC' &&  $ccNumber != '' && ($info->getCcExpMonth() == '' || $info->getCcExpYear() == '')) {
             throw new \Magento\Framework\Exception\LocalizedException(__("Invalid card expiration date."));
-        } else if ($info->getPaymentType() == 'CC' &&  $this->getConfigData('useccv') == '1' && ($info->getCcCid() == '' || strlen($info->getCcCid()) < 3
+        } elseif ($info->getPaymentType() == 'CC' &&  $this->getConfigData('useccv') == '1' && ($info->getCcCid() == '' || strlen($info->getCcCid()) < 3
             || strlen($info->getCcCid()) > 4)) {
             throw new \Magento\Framework\Exception\LocalizedException(__("Invalid Card Verification Number."));
         }
 
         $ccType = '';
-	
-	if (in_array($info->getCcType(), $availableTypes)){
+    
+    if (in_array($info->getCcType(), $availableTypes)) {
             if ($this->validateCcNum($ccNumber)
                 // Other credit card type number validation
                 || ($this->OtherCcType($info->getCcType()) && $this->validateCcNumOther($ccNumber))) {
-
                 $ccType = 'OT';
-                $ccTypeRegExpList = array(
+                $ccTypeRegExpList = [
                     // Solo only
                     'SO' => '/(^(6334)[5-9](\d{11}$|\d{13,14}$))|(^(6767)(\d{12}$|\d{14,15}$))/',
                     'SM' => '/(^(5[0678])\d{11,18}$)|(^(6[^05])\d{11,18}$)|(^(601)[^1]\d{9,16}$)|(^(6011)\d{9,11}$)'
@@ -710,33 +716,30 @@ class Payment extends \Magento\Payment\Model\Method\Cc
                     'DI'  => '/^6011[0-9]{12}$/',
                     // JCB
                     'JCB' => '/^(3[0-9]{15}|(2131|1800)[0-9]{11})$/'
-                );
+                ];
 
-                foreach ($ccTypeRegExpList as $ccTypeMatch=>$ccTypeRegExp) {
+                foreach ($ccTypeRegExpList as $ccTypeMatch => $ccTypeRegExp) {
                     if (preg_match($ccTypeRegExp, $ccNumber)) {
                         $ccType = $ccTypeMatch;
                         break;
                     }
                 }
 
-		if (!$this->OtherCcType($info->getCcType()) && $ccType!=$info->getCcType()) {
+        if (!$this->OtherCcType($info->getCcType()) && $ccType!=$info->getCcType()) {
                     $errorMsg = __('Credit card number mismatch with credit card type.');
-                }
-            }
-            else {
+        }
+            } else {
                 $errorMsg = __('Invalid Credit Card Number');
             }
-
-        }
-        else {
+    } else {
             $errorMsg = __('Credit card type is not allowed for this payment method.');
-        }
+    }
 
         //validate credit card verification number
         if ($errorMsg === false && $this->hasVerification()) {
             $verifcationRegEx = $this->getVerificationRegEx();
             $regExp = isset($verifcationRegEx[$info->getCcType()]) ? $verifcationRegEx[$info->getCcType()] : '';
-            if (!$info->getCcCid() || !$regExp || !preg_match($regExp ,$info->getCcCid())){
+            if (!$info->getCcCid() || !$regExp || !preg_match($regExp, $info->getCcCid())) {
                 $errorMsg = __('Please enter a valid credit card verification number.');
             }
         }
@@ -745,10 +748,10 @@ class Payment extends \Magento\Payment\Model\Method\Cc
             $errorMsg = __('Incorrect credit card expiration date.');
         }
 
-        if($errorMsg) {
-	    if ($this->getConfigData('use_iframe') == '1') {
-		$errorMsg = '';
-	    }
+        if ($errorMsg) {
+        if ($this->getConfigData('use_iframe') == '1') {
+        $errorMsg = '';
+        }
         }
 
         //This must be after all validation conditions
@@ -778,15 +781,14 @@ class Payment extends \Magento\Payment\Model\Method\Cc
             ->setCcSsStartMonth($data->getCcSsStartMonth())
             ->setCcSsStartYear($data->getCcSsStartYear())
             ->setToken($data->getToken())
-	        ->setAdditionalData($data->getBpToken());
+            ->setAdditionalData($data->getBpToken());
         return $this;
-
     }
 
     public function assignBluePayToken($token)
     {
-	$info = $this->getInfoInstance();
-	$info->setAdditionalData($token);
+    $info = $this->getInfoInstance();
+    $info->setAdditionalData($token);
     }
 
     public function prepareSave()
@@ -795,27 +797,29 @@ class Payment extends \Magento\Payment\Model\Method\Cc
         if ($this->_canSaveCc) {
             $info->setCcNumberEnc($info->encrypt('xxxx-'.$info->getCcLast4()));
         }
-		if ($info->getAdditionalData()) {
-			$info->setAdditionalData($info->getAdditionalData());
-		}
+        if ($info->getAdditionalData()) {
+            $info->setAdditionalData($info->getAdditionalData());
+        }
         $info->setCcNumber(null)
             ->setCcCid(null);
         return $this;
-
-    }	
-	
-	public function hasVerificationBackend()
-	{
+    }
+    
+    public function hasVerificationBackend()
+    {
         $configData = $this->getConfigData('useccv_backend');
-        if(is_null($configData)){
+        if (is_null($configData)) {
             return true;
         }
         return (bool) $configData;
     }
 
-    public function saveCustomerPaymentInfo($result) {
+    public function saveCustomerPaymentInfo($result)
+    {
         $info = $this->getInfoInstance();
-        if ($info->getSavePaymentInfo() != '1') return;
+        if ($info->getSavePaymentInfo() != '1') {
+return;
+        }
 
         $customerId = $this->checkoutSession->getQuote()->getCustomerId();
         $customer = $this->customerRegistry->retrieve($customerId);
@@ -825,47 +829,47 @@ class Payment extends \Magento\Payment\Model\Method\Cc
         $newToken = $result->getRrno();
         $newCardType = $result->getCardType();
         $newPaymentAccount = $result->getPaymentAccountMask();
-        $newCcExpMonth = substr($result->getCcExpires(),0,2);
-        $newCcExpYear = substr($result->getCcExpires(),2,2);
+        $newCcExpMonth = substr($result->getCcExpires(), 0, 2);
+        $newCcExpYear = substr($result->getCcExpires(), 2, 2);
 
         // This is a brand new payment account
         if ($info->getToken() == '') {
-            $paymentAcctString = $info->getPaymentType() == 'ACH' ? 
+            $paymentAcctString = $info->getPaymentType() == 'ACH' ?
                 $paymentAcctString . $newPaymentAccount . ' - eCheck,' . $newToken . '|' :
-                $paymentAcctString . $newPaymentAccount . ' - ' .$newCardType . ' [' . $newCcExpMonth . '/' . $newCcExpYear . 
+                $paymentAcctString . $newPaymentAccount . ' - ' .$newCardType . ' [' . $newCcExpMonth . '/' . $newCcExpYear .
             '],' . $newToken . '|';
-        // update an existing payment account   
+        // update an existing payment account
         } else {
-            $paymentAccts = explode('|',$paymentAcctString);
-            foreach($paymentAccts as $paymentAcct) {
-                if (strlen($paymentAcct) < 2)
+            $paymentAccts = explode('|', $paymentAcctString);
+            foreach ($paymentAccts as $paymentAcct) {
+                if (strlen($paymentAcct) < 2) {
                     continue;
-                $paymentAccount = explode(',',$paymentAcct);
+                }
+                $paymentAccount = explode(',', $paymentAcct);
                 if (strpos($paymentAcct, $oldToken) !== false) {
                     $oldPaymentString = $paymentAccount[0];
-                    $oldPaymentAccount = explode('-',$oldPaymentString)[0];
+                    $oldPaymentAccount = explode('-', $oldPaymentString)[0];
                     // gather new ACH info to update payment info in db
                     if ($info->getPaymentType() == 'ACH') {
-                        $newPaymentString = str_replace(trim($oldPaymentAccount), $newPaymentAccount, $oldPaymentString); 
+                        $newPaymentString = str_replace(trim($oldPaymentAccount), $newPaymentAccount, $oldPaymentString);
                     // gather new CC info to update payment info in db
                     } else {
-                        $oldExpMonth = substr(explode('[',($oldPaymentString))[1],0,2);
-                        $oldExpYear = substr(explode('[',($oldPaymentString))[1],3,2);
-                        $oldCardType = explode('[',(explode('-',$oldPaymentString)[1]))[0];
-                        $newPaymentString = str_replace($oldExpMonth, $newCcExpMonth, $oldPaymentString);  
+                        $oldExpMonth = substr(explode('[', ($oldPaymentString))[1], 0, 2);
+                        $oldExpYear = substr(explode('[', ($oldPaymentString))[1], 3, 2);
+                        $oldCardType = explode('[', (explode('-', $oldPaymentString)[1]))[0];
+                        $newPaymentString = str_replace($oldExpMonth, $newCcExpMonth, $oldPaymentString);
                         $newPaymentString = str_replace($oldExpYear, $newCcExpYear, $newPaymentString);
                         $newPaymentString = str_replace(trim($oldPaymentAccount), $newPaymentAccount, $newPaymentString);
-                        $newPaymentString = str_replace(trim($oldCardType), $newCardType, $newPaymentString);  
+                        $newPaymentString = str_replace(trim($oldCardType), $newCardType, $newPaymentString);
                     }
                     $paymentAcctString = str_replace($oldPaymentString, $newPaymentString, $paymentAcctString);
                     $paymentAcctString = str_replace($oldToken, $newToken, $paymentAcctString);
                 }
             }
         }
-        $customerData->setCustomAttribute('bluepay_stored_accts', $paymentAcctString);   
+        $customerData->setCustomAttribute('bluepay_stored_accts', $paymentAcctString);
         $customer->updateData($customerData);
         $customer->save();
         return;
     }
-
 }

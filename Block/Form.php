@@ -70,15 +70,15 @@ class Form extends \Magento\Framework\View\Element\Template
     protected function _construct()
     {
         parent::_construct();
-	if ($this->storeManager->getStore()->isAdmin()) {
-		$this->setTemplate('bluepay/payment.phtml');
-		return;
-	}
-	if ($this->scopeConfig->getValue('payment/bluepay_payment/use_iframe', \Magento\Store\Model\ScopeInterface::SCOPE_STORE) == 1) {
-        	$this->setTemplate('bluepay/creditcardiframe.phtml');
-	} else {
-		$this->setTemplate('bluepay/payment.phtml');
-	}
+    if ($this->storeManager->getStore()->isAdmin()) {
+        $this->setTemplate('bluepay/payment.phtml');
+        return;
+    }
+    if ($this->scopeConfig->getValue('payment/bluepay_payment/use_iframe', \Magento\Store\Model\ScopeInterface::SCOPE_STORE) == 1) {
+            $this->setTemplate('bluepay/creditcardiframe.phtml');
+    } else {
+        $this->setTemplate('bluepay/payment.phtml');
+    }
     }
   
     public function setMethodInfo()
@@ -144,7 +144,7 @@ class Form extends \Magento\Framework\View\Element\Template
             $availableTypes = $method->getConfigData('cctypes');
             if ($availableTypes) {
                 $availableTypes = explode(',', $availableTypes);
-                foreach ($types as $code=>$name) {
+                foreach ($types as $code => $name) {
                     if (!in_array($code, $availableTypes)) {
                         unset($types[$code]);
                     }
@@ -181,7 +181,7 @@ class Form extends \Magento\Framework\View\Element\Template
         $years = $this->getData('cc_years');
         if (is_null($years)) {
             $years = $this->_getConfig()->getYears();
-            $years = array(0=>$this->__('Year'))+$years;
+            $years = [0=>$this->__('Year')]+$years;
             $this->setData('cc_years', $years);
         }
         return $years;
@@ -196,7 +196,7 @@ class Form extends \Magento\Framework\View\Element\Template
     {
         if ($this->getMethod()) {
             $configData = $this->getMethod()->getConfigData('useccv');
-            if(is_null($configData)){
+            if (is_null($configData)) {
                 return true;
             }
             return (bool) $configData;
@@ -206,13 +206,13 @@ class Form extends \Magento\Framework\View\Element\Template
 
     public function hasVerificationBackend()
     {
-	if ($this->getMethod()) {
+    if ($this->getMethod()) {
             $configData = $this->getMethod()->getConfigData('useccv_backend');
-            if(is_null($configData)){
+            if (is_null($configData)) {
                 return true;
             }
             return (bool) $configData;
-        }
+    }
         return true;
     }
 
@@ -223,9 +223,9 @@ class Form extends \Magento\Framework\View\Element\Template
      */
     protected function _toHtml()
     {
-        $this->eventManager->dispatch('payment_form_block_to_html_before', array(
+        $this->eventManager->dispatch('payment_form_block_to_html_before', [
             'block'     => $this
-        ));
+        ]);
         return parent::_toHtml();
     }
 
@@ -237,20 +237,20 @@ class Form extends \Magento\Framework\View\Element\Template
     {
         return $this->getUrl('giftregistry/customer/viewregistry/', ['event_id' => $event['event_id']]);
     }
-    public function getBackUrl(){
+    public function getBackUrl()
+    {
         return $this->getUrl('customer/account/index');
     }
-    public function getNewRegistryUrl(){
+    public function getNewRegistryUrl()
+    {
         return $this->getUrl('giftregistry/customer/newregistry');
     }
-    public function getUpdateUrl(){
+    public function getUpdateUrl()
+    {
         return $this->getUrl('giftregistry/customer/registry');
     }
-    public function getEditUrl($event){
-        return $this->getUrl('giftregistry/customer/editregistry',['event_id' => $event['event_id']]);
+    public function getEditUrl($event)
+    {
+        return $this->getUrl('giftregistry/customer/editregistry', ['event_id' => $event['event_id']]);
     }
-
-
-} 
-
-?>
+}

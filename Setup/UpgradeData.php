@@ -79,7 +79,5 @@ class UpgradeData implements UpgradeDataInterface
         $attribute->save();
 
         //$this->eavOptionSetup->addAttributeOptionIfNotExists(Customer::ENTITY, 'bluepay_stored_accts');
-          
-      
     }
 }

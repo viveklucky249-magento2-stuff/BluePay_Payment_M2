@@ -76,7 +76,5 @@ class InstallData implements InstallDataInterface
         ]);
         
         $attribute->save();
-          
-      
     }
 }

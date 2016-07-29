@@ -40,9 +40,9 @@ class Config
     ) {
         $this->scopeConfig = $scopeConfig;
     }
-    public function getActiveMethods($store=null)
+    public function getActiveMethods($store = null)
     {
-        $methods = array();
+        $methods = [];
         $config = $this->scopeConfig->getValue('payment', \Magento\Store\Model\ScopeInterface::SCOPE_STORE, $store);
         foreach ($config as $code => $methodConfig) {
             if (Mage::getStoreConfigFlag('bluepay_payment/'.$code.'/active', $store)) {
@@ -52,9 +52,9 @@ class Config
         return $methods;
     }
 
-    public function getAllMethods($store=null)
+    public function getAllMethods($store = null)
     {
-        $methods = array();
+        $methods = [];
         $config = $this->scopeConfig->getValue('payment', \Magento\Store\Model\ScopeInterface::SCOPE_STORE, $store);
         foreach ($config as $code => $methodConfig) {
             $methods[$code] = $this->_getMethod($code, $methodConfig);
@@ -62,7 +62,7 @@ class Config
         return $methods;
     }
 
-    protected function _getMethod($code, $config, $store=null)
+    protected function _getMethod($code, $config, $store = null)
     {
         if (isset(self::$_methods[$code])) {
             return self::$_methods[$code];
@@ -76,7 +76,7 @@ class Config
 
     public function getAccountTypes()
     {
-        $types = array('CHECKING' => 'Checking', 'BUSINESSCHECKING' => 'Business checking', 'SAVINGS' => 'Savings');
+        $types = ['CHECKING' => 'Checking', 'BUSINESSCHECKING' => 'Business checking', 'SAVINGS' => 'Savings'];
         return $types;
-    }    
+    }
 }

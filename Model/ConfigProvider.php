@@ -72,16 +72,17 @@ class ConfigProvider implements ConfigProviderInterface
     {
         $paymentAcctString = $this->_customerSession->getCustomerDataObject()->getCustomAttribute('bluepay_stored_accts') ? $this->_customerSession->getCustomerDataObject()->getCustomAttribute('bluepay_stored_accts')->getValue() : '';
         $options = [];
-        if (strpos($paymentAcctString, '|') !== FALSE) {
-                $paymentAccts = explode('|',$paymentAcctString);
-                foreach($paymentAccts as $paymentAcct) {
-                    if (strlen($paymentAcct) < 2)
+        if (strpos($paymentAcctString, '|') !== false) {
+                $paymentAccts = explode('|', $paymentAcctString);
+                foreach ($paymentAccts as $paymentAcct) {
+                    if (strlen($paymentAcct) < 2) {
                         continue;
-                    $paymentAccount = explode(',',$paymentAcct);
+                    }
+                    $paymentAccount = explode(',', $paymentAcct);
                     $val = ['label' => __($paymentAccount[0]), 'value' => $paymentAccount[1]];
-                    array_push($options,$val);
+                    array_push($options, $val);
                 }
-            }
+        }
         $config = [
             'payment' => [
                 'bluepay_payment' => [

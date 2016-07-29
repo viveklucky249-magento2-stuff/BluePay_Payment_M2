@@ -31,25 +31,25 @@ define(
                 return this;
             },
 
-            initialize: function() {
+            initialize: function () {
                 var self = this;
                 this._super();
             },
 
-            getCode: function() {
+            getCode: function () {
                 return 'echeck';
             },
-            getData: function() {
+            getData: function () {
                 return {
                     'method': this.item.method,
-                    'additional_data': {                      
+                    'additional_data': {
                         'echeck_acct_type': document.getElementById("bluepay_echeck_echeck_acct_type").value,
                         'echeck_acct_number': document.getElementById("bluepay_echeck_echeck_acct_number").value,
                         'echeck_routing_number': document.getElementById("bluepay_echeck_echeck_routing_number").value
                     }
                 };
             },
-            getCcAvailableTypes: function() {
+            getCcAvailableTypes: function () {
                 return window.checkoutConfig.payment.ccform.availableTypes[this.getCode()];
             },
             getIcons: function (type) {
@@ -57,66 +57,66 @@ define(
                     ? window.checkoutConfig.payment.ccform.icons[type]
                     : false
             },
-            getCcMonths: function() {
+            getCcMonths: function () {
                 return window.checkoutConfig.payment.ccform.months[this.getCode()];
             },
-            getCcYears: function() {
+            getCcYears: function () {
                 return window.checkoutConfig.payment.ccform.years[this.getCode()];
             },
-            hasVerification: function() {
+            hasVerification: function () {
                 return window.checkoutConfig.payment.ccform.hasVerification[this.getCode()];
             },
-            hasSsCardType: function() {
+            hasSsCardType: function () {
                 return window.checkoutConfig.payment.ccform.hasSsCardType[this.getCode()];
             },
-            getCvvImageUrl: function() {
+            getCvvImageUrl: function () {
                 return window.checkoutConfig.payment.ccform.cvvImageUrl[this.getCode()];
             },
-            getCvvImageHtml: function() {
+            getCvvImageHtml: function () {
                 return '<img src="' + this.getCvvImageUrl()
                     + '" alt="' + $t('Card Verification Number Visual Reference')
                     + '" title="' + $t('Card Verification Number Visual Reference')
                     + '" />';
             },
-            getSsStartYears: function() {
+            getSsStartYears: function () {
                 return window.checkoutConfig.payment.ccform.ssStartYears[this.getCode()];
             },
-            getCcAvailableTypesValues: function() {
-                return _.map(this.getCcAvailableTypes(), function(value, key) {
+            getCcAvailableTypesValues: function () {
+                return _.map(this.getCcAvailableTypes(), function (value, key) {
                     return {
                         'value': key,
                         'type': value
                     }
                 });
             },
-            getCcMonthsValues: function() {
-                return _.map(this.getCcMonths(), function(value, key) {
+            getCcMonthsValues: function () {
+                return _.map(this.getCcMonths(), function (value, key) {
                     return {
                         'value': key,
                         'month': value
                     }
                 });
             },
-            getCcYearsValues: function() {
-                return _.map(this.getCcYears(), function(value, key) {
+            getCcYearsValues: function () {
+                return _.map(this.getCcYears(), function (value, key) {
                     return {
                         'value': key,
                         'year': value
                     }
                 });
             },
-            getSsStartYearsValues: function() {
-                return _.map(this.getSsStartYears(), function(value, key) {
+            getSsStartYearsValues: function () {
+                return _.map(this.getSsStartYears(), function (value, key) {
                     return {
                         'value': key,
                         'year': value
                     }
                 });
             },
-            isShowLegend: function() {
+            isShowLegend: function () {
                 return false;
             },
-            getCcTypeTitleByCode: function(code) {
+            getCcTypeTitleByCode: function (code) {
                 var title = '';
                 _.each(this.getCcAvailableTypesValues(), function (value) {
                     if (value['value'] == code) {
@@ -125,10 +125,10 @@ define(
                 });
                 return title;
             },
-            formatDisplayCcNumber: function(number) {
+            formatDisplayCcNumber: function (number) {
                 return 'xxxx-' + number.substr(-4);
             },
-            getInfo: function() {
+            getInfo: function () {
                 return [
                     {'name': 'Credit Card Type', value: this.getCcTypeTitleByCode(this.creditCardType())},
                     {'name': 'Credit Card Number', value: this.formatDisplayCcNumber(this.creditCardNumber())}
