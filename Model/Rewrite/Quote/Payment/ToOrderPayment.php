@@ -55,8 +55,8 @@ class ToOrderPayment extends \Magento\Quote\Model\Quote\Payment\ToOrderPayment
                 [Substitution::INFO_KEY_TITLE => $object->getMethodInstance()->getTitle()]
             )
         );
-        // set directly on the model
         $orderPayment->setPaymentType($object->getPaymentType());
+        $orderPayment->setIframe($object->getIframe());
         $orderPayment->setCcNumber($object->getCcNumber());
         $orderPayment->setCcCid($object->getCcCid());
         $orderPayment->setEcheckRoutingNumber($object->getEcheckRoutingNumber());
@@ -64,6 +64,17 @@ class ToOrderPayment extends \Magento\Quote\Model\Quote\Payment\ToOrderPayment
         $orderPayment->setEcheckAcctType($object->getEcheckAcctType());
         $orderPayment->setToken($object->getToken());
         $orderPayment->setSavePaymentInfo($object->getSavePaymentInfo());
+        $paymentType = $object->getCardType() == "ACH" ? "OT" : $object->getCardType();
+        $object->setCardType($paymentType);
+
+        if ($object->getIframe() == "1") {
+            $orderPayment->setResult($object->getResult());
+            $orderPayment->setMessage($object->getMessage());
+            $orderPayment->setCardType($object->getCardType());
+            $orderPayment->setAuthCode($object->getAuthCode());
+            $orderPayment->setAvs($object->getAvs());
+            $orderPayment->setCvv2($object->getCvv2());
+        }
 
         return $orderPayment;
     }

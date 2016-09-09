@@ -19,8 +19,8 @@
                 <!--<usecvv_backend>0</usecvv_backend>-->
                 <allowspecific>0</allowspecific>
                 <currency>USD</currency>
-                <!--<duplicate_check>0</duplicate_check>
-                <use_iframe>0</use_iframe>-->
+                <!--<duplicate_check>0</duplicate_check>-->
+                <use_iframe>1</use_iframe>
             </bluepay_payment>
         </payment>
     </default>

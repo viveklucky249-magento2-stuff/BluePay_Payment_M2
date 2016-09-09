@@ -31,21 +31,31 @@ use Magento\Payment\Model\CcConfig;
 
 class Form extends \Magento\Framework\View\Element\Template
 {
+    private $customerSession;
+    private $customerRegistry;
+    private $addressRegistry;
     private $storeManager;
+    private $scopeConfiguration;
 
     public function __construct(
         \Magento\Framework\View\Element\Template\Context $context,
         \Magento\Customer\Model\Session $customerSession,
+        \Magento\Customer\Model\CustomerRegistry $customerRegistry,
+        \Magento\Customer\Model\AddressRegistry $addressRegistry,
         \Magento\Framework\ObjectManagerInterface $objectManager,
         \Magento\Store\Model\StoreManagerInterface $storeManager,
+        \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfiguration,
         CcConfig $ccConfig,
         array $data = []
     ) {
     parent::__construct($context, $data);
     $this->customerSession = $customerSession;
-    $this->_objectManager = $objectManager;
+    $this->customerRegistry = $customerRegistry;
+    $this->addressRegistry = $addressRegistry;
+    $this->objectManager = $objectManager;
     $this->storeManager = $storeManager;
     $this->ccConfig = $ccConfig;
+    $this->scopeConfiguration = $scopeConfiguration;
     }
 
     public function _prepareLayout()
@@ -94,5 +104,72 @@ class Form extends \Magento\Framework\View\Element\Template
     public function getStoreUrl()
     {
         return $this->storeManager->getStore()->getBaseUrl();
+    }
+
+    public function getConfigData($value)
+    {
+        return $this->scopeConfiguration->getValue('payment/bluepay_payment/' . $value, \Magento\Store\Model\ScopeInterface::SCOPE_STORE);
+    }
+
+    public function getTpsDef()
+    {
+        return "MERCHANT NAME1 NAME2 COMPANY_NAME MODE";
+    }
+
+    public function getTps()
+    {
+        $customer = $this->customerRegistry->retrieve($this->customerSession->getCustomerId());
+        $customerData = $customer->getDataModel();
+        $hashstr = $this->scopeConfiguration->getValue(
+            'payment/bluepay_payment/secret_key',
+            \Magento\Store\Model\ScopeInterface::SCOPE_STORE
+            ) .
+            $this->scopeConfiguration->getValue(
+                'payment/bluepay_payment/account_id',
+                \Magento\Store\Model\ScopeInterface::SCOPE_STORE
+            ) .
+            $this->getCustomerData()->getFirstName() .
+            $this->getCustomerData()->getLastName() .
+            $this->getCustomerData()->getCompany() .
+            $this->scopeConfiguration->getValue(
+            'payment/bluepay_payment/trans_mode',
+            \Magento\Store\Model\ScopeInterface::SCOPE_STORE
+        );
+        return hash('sha512', $hashstr);
+    }
+
+    public function getCustomerName()
+    {
+        $customer = $this->customerRegistry->retrieve($this->customerSession->getCustomerId());
+        return $customer->getDataModel();
+    }
+
+    public function getCustomerData()
+    {
+        $customer = $this->customerRegistry->retrieve($this->customerSession->getCustomerId());
+        $customerData = $customer->getDataModel();
+        $address = $this->addressRegistry->retrieve($this->customerSession->getCustomer()->getDefaultBilling());
+        return $address->getDataModel();
+    }
+
+    public function getStoredPaymentAccts()
+    {
+        $customer = $this->customerRegistry->retrieve($this->customerSession->getCustomerId());
+        $customerData = $customer->getDataModel();
+        $paymentAcctString = $customerData->getCustomAttribute('bluepay_stored_accts') ?
+            $customerData->getCustomAttribute('bluepay_stored_accts')->getValue() : '';
+        $options = [];
+        if (strpos($paymentAcctString, '|') !== false) {
+                $paymentAccts = explode('|', $paymentAcctString);
+                foreach ($paymentAccts as $paymentAcct) {
+                    if (strlen($paymentAcct) < 2) {
+                        continue;
+                    }
+                    $paymentAccount = explode(',', $paymentAcct);
+                    $val = ['label' => __($paymentAccount[0]), 'value' => $paymentAccount[1]];
+                    array_push($options, $val);
+                }
+        }
+        return $options;
     }
 }

@@ -46,74 +46,32 @@ class Request extends \Magento\Framework\App\Action\Action
     public function execute()
     {
         $result = $this->jsonResultFactory->create();
-
-        if ($this->getRequest()->getPost('payment') != null) {
-            $token = $this->getRequest()->getPost('payment')['stored_acct'] ?
-                $this->getRequest()->getPost('payment')['stored_acct'] : '';
-            $client = $this->zendClientFactory->create();
-            $client->setUri('https://secure.bluepay.com/interfaces/bp10emu');
-            $client->setConfig([
-                'maxredirects'=>0,
-                'timeout'=>15,
-                'useragent'=>'BluePay Magento 2 Payment Plugin/' . self::CURRENT_VERSION,
-            ]);
-            $post = [
-                'RESPONSEVERSION' => '3',
-                'MERCHANT' => $this->scopeConfiguration->getValue(
-                    'payment/bluepay_payment/account_id',
-                    \Magento\Store\Model\ScopeInterface::SCOPE_STORE
-                ),
-                'TRANSACTION_TYPE' => 'AUTH',
-                'AMOUNT' => '0.00',
-                'PAYMENT_TYPE' => $this->getRequest()->getPost('payment')['payment_type'],
-                'MODE' => $this->scopeConfiguration->getValue(
-                    'payment/bluepay_payment/trans_mode',
-                    \Magento\Store\Model\ScopeInterface::SCOPE_STORE
-                ),
-                'TPS_HASH_TYPE' => 'SHA512',
-                'RRNO' => $token,
-                'NAME1' => $this->customerSession->getCustomerData()->getFirstName(),
-                'NAME2' => $this->customerSession->getCustomerData()->getLastName(),
-                'COMPANY_NAME' => $this->customerSession->getCustomerData()->getAddresses()[0]->getCompany(),
-                'TAMPER_PROOF_SEAL' => $this->calcTPS($token)
-            ];
-            if ($this->getRequest()->getPost('payment')['payment_type'] == 'CC') {
-                $ccFields = [
-                    'CC_NUM' => $this->getRequest()->getPost('payment')['cc_number'],
-                    'CC_EXPIRES_MONTH' => $this->getRequest()->getPost('payment')['cc_exp_month'],
-                    'CC_EXPIRES_YEAR' => $this->getRequest()->getPost('payment')['cc_exp_year']
-                ];
-                $post = array_merge($post, $ccFields);
-            } else {
-                $achFields = [
-                    'ACH_ACCOUNT_TYPE' => $this->getRequest()->getPost('payment')['echeck_acct_type'],
-                    'ACH_ACCOUNT' => $this->getRequest()->getPost('payment')['echeck_acct_number'],
-                    'ACH_ROUTING' => $this->getRequest()->getPost('payment')['echeck_routing_number']
-                ];
-                $post = array_merge($post, $achFields);
-            }
-            $client->setParameterPost($post);
-            $client->setMethod(\Zend_Http_Client::POST);
-            try {
-                $response = $client->request();
-
-                $r = substr($response->getHeader('location'), strpos($response->getHeader('location'), "?") + 1);
-                parse_str($r, $responseFromBP);
-                if ($responseFromBP['Result'] == 'APPROVED') {
-                    $this->saveCustomerPaymentInfo($responseFromBP);
-                }
-                 $result->setData(
-                     [
-                        'result' => __($responseFromBP['Result']),
-                        'message' => __($responseFromBP['MESSAGE'])
-                     ]
-                 );
-                $result->setHttpResponseCode(\Magento\Framework\Webapi\Response::HTTP_OK);
-                return $result;
-            } catch (\Exception $e) {
-                throw new \Magento\Framework\Validator\Exception\LocalizedException(__($e->getMessage()));
-            }
+        if ($this->getRequest()->getPost('delete') == '1') {
+            $this->deletePaymentInfo();
+            $result->setData(
+                [
+                    'result' => __('3'),
+                    'message' => __('Payment account successfully deleted')
+                ]
+            );
+        } else if ($this->getRequest()->getPost('trans_result') == 'APPROVED') {
+            $this->saveCustomerPaymentInfo();
+            $result->setData(
+                [
+                    'result' => __($this->getRequest()->getPost('trans_result')),
+                    'message' => __($this->getRequest()->getPost('message'))
+                ]
+            );
+        } else {
+            $result->setData(
+                [
+                    'result' => __($this->getRequest()->getPost('trans_result')),
+                    'message' => __($this->getRequest()->getPost('message'))
+                ]
+            );
         }
+        $result->setHttpResponseCode(\Magento\Framework\Webapi\Response::HTTP_OK);
+        return $result;
     }
 
     final public function calcTPS($token)
@@ -133,21 +91,21 @@ class Request extends \Magento\Framework\App\Action\Action
         return hash('sha512', $hashstr);
     }
 
-    public function saveCustomerPaymentInfo($result)
+    public function saveCustomerPaymentInfo()
     {
         $customer = $this->customerRegistry->retrieve($this->customerSession->getId());
         $customerData = $this->customerSession->getCustomerData();
         $paymentAcctString = $customerData->getCustomAttribute('bluepay_stored_accts') ?
-            $customerData->getCustomAttribute('bluepay_stored_accts')->getValue() : '';
-        $oldToken = isset($result["MASTER_ID"]) ? $result["MASTER_ID"] : '';
-        $newToken = $result['RRNO'];
-        $newCardType = $result['CARD_TYPE'];
-        $newCcExpMonth = isset($result['CARD_EXPIRE']) ? substr($result['CARD_EXPIRE'], 0, 2) : '';
-        $newCcExpYear = isset($result['CARD_EXPIRE']) ? substr($result['CARD_EXPIRE'], 2, 2) : '';
-        $newPaymentAccount = $result['PAYMENT_ACCOUNT'];
+        $customerData->getCustomAttribute('bluepay_stored_accts')->getValue() : '';
+        $oldToken = $this->getRequest()->getPost('master_id');
+        $newToken = $this->getRequest()->getPost('rrno');
+        $newCardType = $this->getRequest()->getPost('cc_type');
+        $newCcExpMonth = $this->getRequest()->getPost('cc_expire_mm');
+        $newCcExpYear = $this->getRequest()->getPost('cc_expire_yy');
+        $newPaymentAccount = $this->getRequest()->getPost('payment_account_mask');
         // This is a brand new payment account
         if ($oldToken == '') {
-            $paymentAcctString = $result['PAYMENT_TYPE'] == 'ACH' ?
+            $paymentAcctString = $this->getRequest()->getPost('payment_type') == 'ACH' ?
                 $paymentAcctString . $newPaymentAccount . ' - eCheck,' . $newToken . '|' :
                 $paymentAcctString . $newPaymentAccount . ' - ' .$newCardType . ' [' .
                 $newCcExpMonth . '/' . $newCcExpYear .
@@ -188,6 +146,31 @@ class Request extends \Magento\Framework\App\Action\Action
                     $paymentAcctString = str_replace($oldToken, $newToken, $paymentAcctString);
                     break;
                 }
+            }
+        }
+        $customerData->setCustomAttribute('bluepay_stored_accts', $paymentAcctString);
+        $customer->updateData($customerData);
+        $customer->save();
+    }
+
+    public function deletePaymentInfo()
+    {
+        $customer = $this->customerRegistry->retrieve($this->customerSession->getId());
+        $customerData = $this->customerSession->getCustomerData();
+        $paymentAcctString = $customerData->getCustomAttribute('bluepay_stored_accts') ?
+        $customerData->getCustomAttribute('bluepay_stored_accts')->getValue() : '';
+        $oldToken = $this->getRequest()->getPost('master_id');
+        // update an existing payment account
+        $paymentAccts = explode('|', $paymentAcctString);
+        foreach ($paymentAccts as $paymentAcct) {
+            if (strlen($paymentAcct) < 2) {
+                continue;
+            }
+            $paymentAccount = explode(',', $paymentAcct);
+            // Delete old payment account from string value in db
+            if (strpos($paymentAcct, $oldToken) !== false) {
+                $paymentAcctString = str_replace($paymentAcct . '|', '', $paymentAcctString);
+                break;
             }
         }
         $customerData->setCustomAttribute('bluepay_stored_accts', $paymentAcctString);

@@ -42,11 +42,15 @@ class ConfigProvider implements ConfigProviderInterface
 
     private $ccConfig;
 
-    private $_customerRepository;
+    private $customerRegistry;
 
     private $_coreRegistry = null;
 
     private $_customerSession;
+
+    private $storeManager;
+
+    private $cart;
 
     /**
      * @param \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfiguration
@@ -56,12 +60,18 @@ class ConfigProvider implements ConfigProviderInterface
         CcConfig $ccConfig,
         Source $assetSource,
         \Magento\Customer\Model\Session $customerSession,
-        \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfiguration
+        \Magento\Customer\Model\CustomerRegistry $customerRegistry,
+        \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfiguration,
+        \Magento\Store\Model\StoreManagerInterface $storeManager,
+        \Magento\Checkout\Model\Cart $cart
     ) {
         $this->ccConfig = $ccConfig;
         $this->_customerSession = $customerSession;
+        $this->customerRegistry = $customerRegistry;
         $this->scopeConfiguration = $scopeConfiguration;
         $this->assetSource = $assetSource;
+        $this->storeManager = $storeManager;
+        $this->cart = $cart;
     }
 
     /**
@@ -85,9 +95,43 @@ class ConfigProvider implements ConfigProviderInterface
                     array_push($options, $val);
                 }
         }
+        $customerId = $this->cart->getQuote()->getCustomerId();
+        $customer = $this->customerRegistry->retrieve($customerId);
+        $customerData = $customer->getDataModel();
+
+		$hashstr = $this->scopeConfiguration->getValue(
+            'payment/bluepay_payment/secret_key',
+            \Magento\Store\Model\ScopeInterface::SCOPE_STORE
+        	) .
+            $this->scopeConfiguration->getValue(
+                'payment/bluepay_payment/account_id',
+                \Magento\Store\Model\ScopeInterface::SCOPE_STORE
+            ) .
+        	$customerData->getAddresses()[0]->getCompany() . 
+        	$customerData->getAddresses()[0]->getStreet()[0] . 
+        	$customerData->getAddresses()[0]->getCity() .
+        	$customerData->getAddresses()[0]->getRegion()->getRegionCode() .
+        	$customerData->getAddresses()[0]->getPostCode() .
+        	$this->scopeConfiguration->getValue(
+            'payment/bluepay_payment/trans_mode',
+            \Magento\Store\Model\ScopeInterface::SCOPE_STORE
+        );
+        $tps = hash('sha512', $hashstr);
+        $transType = $this->scopeConfiguration->getValue(
+                        'payment/bluepay_payment/payment_action',
+                        \Magento\Store\Model\ScopeInterface::SCOPE_STORE
+                    ) == "authorize" ? "AUTH" : "SALE";
+
         $config = [
             'payment' => [
                 'bluepay_payment' => [
+                    'accountId' => $this->scopeConfiguration->getValue(
+                        'payment/bluepay_payment/account_id',
+                        \Magento\Store\Model\ScopeInterface::SCOPE_STORE
+                    ),
+                    'tps' => $tps,
+                    'tpsDef' => "MERCHANT COMPANY_NAME ADDR1 CITY STATE ZIPCODE MODE",
+                    'transType' => $transType,
                     'cctypes' => $this->scopeConfiguration->getValue(
                         'payment/bluepay_payment/cctypes',
                         \Magento\Store\Model\ScopeInterface::SCOPE_STORE
@@ -112,7 +156,22 @@ class ConfigProvider implements ConfigProviderInterface
                         \Magento\Store\Model\ScopeInterface::SCOPE_STORE
                     ),
                     'storedAccounts' => $options,
-                    'isCustomerLoggedIn' => $this->_customerSession->isLoggedIn()
+                    'isCustomerLoggedIn' => $this->_customerSession->isLoggedIn(),
+                    'enableIframe' => $this->scopeConfiguration->getValue(
+                        'payment/bluepay_payment/use_iframe',
+                        \Magento\Store\Model\ScopeInterface::SCOPE_STORE
+                    ),
+                    'iframeUrl' => 'https://secure.bluepay.com/interfaces/shpf?SHPF_FORM_ID=magento2',
+                    'useCvv2' => $this->scopeConfiguration->getValue(
+                        'payment/bluepay_payment/useccv',
+                        \Magento\Store\Model\ScopeInterface::SCOPE_STORE
+                    ),
+                    'quoteData' => $this->cart->getQuote()->getData(),
+                    'customerCompany' => $customerData->getAddresses()[0]->getCompany(),
+                    'customerStreet' => $customerData->getAddresses()[0]->getStreet()[0],
+                    'customerCity' => $customerData->getAddresses()[0]->getCity(),
+                    'customerRegion' => $customerData->getAddresses()[0]->getRegion()->getRegionCode(),
+                    'customerZip' => $customerData->getAddresses()[0]->getPostCode()
                 ],
                 'test' => "OK"
                 ],

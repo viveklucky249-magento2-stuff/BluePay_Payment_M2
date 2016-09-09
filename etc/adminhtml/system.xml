@@ -53,11 +53,11 @@
                 <field id="duplicate_check" translate="label" type="select" sortOrder="9" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Duplicate Checker</label>
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
-                </field>
+                </field>-->
                 <field id="use_iframe" translate="label" type="select" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Enable Checkout Iframe</label>
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
-                </field>-->
+                </field>
                 <field id="order_status" translate="label" type="select" sortOrder="11" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>New Order Status</label>
                     <source_model>BluePay\Payment\Model\Source\OrderStatuses</source_model>

@@ -4,6 +4,7 @@
         <sequence>
         	<module name="Magento_Customer"/>
             <module name="Magento_Sales" />
+            <module name="Magento_Quote"/>
             <module name="Magento_Payment" />
             <module name="Magento_Directory" />
             <module name="Magento_Config" />

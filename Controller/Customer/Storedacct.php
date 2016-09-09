@@ -73,6 +73,8 @@ class Storedacct extends \Magento\Framework\App\Action\Action
         $requestParams = $this->getRequest()->getParams();
         if (!isset($requestParams['result']) || !isset($requestParams['message'])) {
             return $resultPage;
+        } else if ($this->getRequest()->getParams()['result'] == "3") {
+            $messageBlock->addSuccess('Payment account successfully deleted.');
         } elseif ($this->getRequest()->getParams()['result'] == "APPROVED") {
             $messageBlock->addSuccess('Payment account successfully saved.');
         } else {

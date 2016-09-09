@@ -264,8 +264,6 @@
     <!-- /ko -->
 </fieldset>
 </form>
-<div>
-
         <div class="checkout-agreements-block">
             <!-- ko foreach: $parent.getRegion('before-place-order') -->
             <!-- ko template: getTemplate() --><!-- /ko -->
@@ -282,7 +280,7 @@
                         enable: (getCode() == isChecked())
                         "
                         disabled>
-                    <span data-bind="text: $t('Place Order')"></span>
+                    <span data-bind="i18n: 'Place Order'"></span>
                 </button>
             </div>
         </div>

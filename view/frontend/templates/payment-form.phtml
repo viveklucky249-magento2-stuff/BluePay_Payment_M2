@@ -1,14 +1,33 @@
+<script>
+        var accountId = "<?php echo $this->getConfigData('account_id');?>";
+        var transMode = "<?php echo $this->getConfigData('trans_mode');?>";
+        var tps = "<?php echo $this->getTps();?>";
+        var tpsDef = "<?php echo $this->getTpsDef();?>";
+        var firstName = "<?php echo $this->getCustomerData()->getFirstName();?>";
+        var lastName = "<?php echo $this->getCustomerData()->getLastName();?>";
+        var companyName = "<?php echo $this->getCustomerData()->getCompany();?>";
+        var iframeUrl = 'https://secure.bluepay.com/interfaces/shpf?SHPF_FORM_ID=magento2';
+</script>
 <div id="result"></div>
 <input type="hidden" id="storeUrl" value="<?php echo $this->getStoreUrl()?>" />
 <div class="payment-method">    
     <div class="payment-method-content">    
-        <form class="form" id="form">
+    <form class="form" id="form">
+    <input type="hidden" id="payment_type" name="payment_type">
+    <input type="hidden" id="payment_account_mask" name="payment_account_mask">
+    <input type="hidden" id="cc_type" name="cc_type">
+    <input type="hidden" id="cc_expire_mm" name="cc_expire_mm">
+    <input type="hidden" id="cc_expire_yy" name="cc_expire_yy">
+    <input type="hidden" id="rrno" name="rrno">
+    <input type="hidden" id="master_id" name="master_id">
+    <input type="hidden" id="trans_result" name="trans_result">
+    <input type="hidden" id="message" name="message">
     <fieldset data-bind="attr: {class: 'fieldset payment items ccard', id: 'payment_form'}">
     <legend class="legend">
         <span><!-- ko i18n: 'Payment Information'--><!-- /ko --></span>
     </legend><br />
     <!-- /ko -->
-    <div class="field type" data-bind="attr: {id: 'payment_type_div'}">
+    <div class="field type" data-bind="attr: {id: 'bluepay_payment_payment_type_div'}">
             <label for="payment_type">
                 <span>Payment Type</span>
             </label>
@@ -16,7 +35,7 @@
                 <div class="fields group group-2">
                     <div class="field no-label month">
                         <div class="control">
-                            <select name="payment[payment_type]" id="payment_type" style="width: 280px">
+                            <select name="payment[payment_type]" id="bluepay_payment_payment_type" style="width: 280px">
                                 <option value="CC">Credit Card</option>
                                 <option value="ACH">eCheck</option>
                             </select>
@@ -25,16 +44,16 @@
                 </div>
             </div>
     </div>
-    <div class="field date required" data-bind="attr: {id: 'stored_acct_div'}">
+    <div class="field date required" data-bind="attr: {id: 'bluepay_payment_stored_acct_div'}">
         <div class="control">
-                <label data-bind="attr: {for: 'stored_acct'}" class="label">
+                <label data-bind="attr: {for: 'bluepay_payment_stored_acct'}" class="label">
                     <span>Stored Payment Account</span>
                 </label>
                 <div class="control">
                 <div class="fields group group-2">
                     <div class="field no-label month">
                         <div class="control">
-                                <select name="payment[stored_acct]" id="stored_acct"
+                                <select name="payment[stored_acct]" id="bluepay_payment_stored_acct"
                                         style="width: 280px">
                                         <?php
                                         if (count($this->getStoredAccounts()) == 0) {
@@ -46,102 +65,20 @@
                                             }
                                         } ?>
                                 </select>
+                                <button class="action primary checkout" id="deleteBtn" type="button">
+                                    <span>Delete</span>
+                                </button>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-    <div id="cc">
-    <div class="field number required" data-bind="attr: {id: 'cc_number_div'}">
-        <label data-bind="attr: {for: 'cc_number', id: 'cc_number_label'}" class="label">
-            <span>Credit Card Number</span>
-        </label>
-        <div class="control">
-            <input type="text" name="payment[cc_number]" id="cc_number" class="input-text" value="" style="width: 280px" />
-        </div>
-    </div>
-
-    <div class="field date required" data-bind="attr: {id: 'cc_type_exp_div'}">
-        <label data-bind="attr: {for: 'expiration_month'}" class="label">
-            <span>Expiration Date</span>
-        </label>
-        <div class="control">
-            <div class="fields group group-2">
-                <div class="field no-label month">
-                    <div class="control">
-                        <select  name="payment[cc_exp_month]" id="expiration_month" style="width: 140px">
-                            <?php
-                                foreach($this->getCcMonths() as $month) { ?>
-                                    <option value="<?= substr($month,0,2) ?>"><?= $month ?></option>
-                            <?php
-                                } ?>
-                        </select>
-                        <select name="payment[cc_exp_year]" id="expiration_year" style="width: 80px">
-                            <?php
-                                foreach($this->getCcYears() as $year) { ?>
-                                    <option value="<?= substr($year,2) ?>"><?= $year ?></option>
-                            <?php
-                                } ?>
-                        </select>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    </div>
-    <div id="echeck">
-    <div class="field date required" data-bind="attr: {id: 'echeck_acct_type_div'}">
-                <label data-bind="attr: {for: 'echeck_acct_type'}" class="label">
-                    <span>Account Type</span>
-                </label>
-                <div class="control">
-                    <div class="fields group group-2">
-                        <div class="field no-label month">
-                            <div class="control">
-                                <select name="payment[echeck_acct_type]"
-                                        class="select select-month"
-                                        style="width: 280px"
-                                        data-bind="attr: { id: 'echeck_acct_type'}">
-                                        <option value="C">Checking</option>
-                                        <option value="S">Savings</option>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-    </div>
-
-    <div class="field number required" data-bind="attr: {id: 'echeck_acct_number_div'}">
-                    <label data-bind="attr: {for: 'echeck_acct_number'}" class="label">
-                        <span>Account Number</span>
-                    </label>
-                    <div class="control">
-                        <input type="text" name="payment[echeck_acct_number]" id="echeck_acct_number" class="input-text" value="" style="width: 280px"
-                            data-bind="attr: {
-                                    autocomplete: off,
-                                    id: 'echeck_acct_number',
-                                    title: $t('Account Number') }"/>
-                    </div>
-    </div>
-    <div class="field number required" data-bind="attr: {id: 'echeck_routing_number_div'}">
-                    <label data-bind="attr: {for: 'echeck_routing_number'}" class="label">
-                        <span>Routing Number</span>
-                    </label>
-                    <div class="control">
-                        <input type="text" name="payment[echeck_routing_number]" id="echeck_routing_number" class="input-text" value="" style="width: 280px"
-                            data-bind="attr: {
-                                    autocomplete: off,
-                                    id: 'echeck_routing_number',
-                                    title: $t('Routing Number') }"/>
-                    </div>
-    </div>
-
-    </div>
+    <iframe id="iframe" frameBorder="0"></iframe>
     <br/>
-        <div class="actions-toolbar">
+    <div class="actions-toolbar">
             <div class="primary">
-                <button class="action primary checkout" id="submitBtn"
+                <button class="action primary checkout" id="submitBtn" onclick="return submitIframe();"
                         type="submit">
                     <span>Submit</span>
                 </button>

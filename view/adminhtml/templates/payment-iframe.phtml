@@ -1,0 +1,222 @@
+<?php
+
+$code = $block->escapeHtml($block->getMethodCode());
+$method = $block->getMethod();
+$controller = $block->escapeHtml($block->getRequest()->getControllerName());
+$ccType = $block->getInfoData('cc_type');
+$ccExpMonth = $block->getInfoData('cc_exp_month');
+$ccExpYear = $block->getInfoData('cc_exp_year');
+?>
+<script>
+    require([
+        'prototype',
+        //"Magento_Sales/order/create/form",
+        "BluePay_Payment/js/form",
+        'mage/translate',
+        //"BluePay_Payment/js/backend-payment-form-iframe",
+        'jquery/ui'
+    ], function(){
+        'use strict';
+        window.accountId = <?php echo $method->getConfigData('account_id');?>;
+        window.storedAccounts = <?php echo json_encode($block->getStoredPaymentAccts());?>;
+        window.transMode = "<?php echo $method->getConfigData('trans_mode');?>";
+        window.grandTotal = <?php echo $block->getGrandTotal();?>;
+        window.transType = "<?php echo $method->getConfigData('payment_action')?>" == 'authorize' ? 'AUTH' : 'SALE';
+        window.tps = "<?php echo $block->getTps();?>";
+        window.tpsDef = "<?php echo $block->getTpsDef();?>";
+        window.firstName = jQuery("#order-billing_address_firstname").val();
+        window.lastName = jQuery("#order-billing_address_lastname").val();
+        window.companyName = jQuery("#order-billing_address_company").val();
+        window.addr1 = jQuery("#order-billing_address_street0").val();
+        window.addr2 = jQuery("#order-billing_address_street1").val();
+        window.city = jQuery("#order-billing_address_city").val();
+        window.state = jQuery("#order-billing_address_region").val();
+        window.zip = jQuery("#order-billing_address_postcode").val();
+        window.phone = jQuery("#order-billing_address_telephone").val();
+        window.email = "<?php echo $block->getCustomerEmail();?>";
+        window.useCvv2 = "<?php echo $method->getConfigData('useccv');?>";
+        window.iframeUrl = 'https://secure.bluepay.com/interfaces/shpf?SHPF_FORM_ID=magento2';
+
+        jQuery(document).ready(function() {
+            jQuery('#bluepay_payment_payment_type').attr('disabled', false);
+            jQuery('#bluepay_payment_stored_acct').attr('disabled', false);
+            jQuery('#bluepay_payment_cc_number').attr('disabled', false);
+            jQuery('#bluepay_payment_cc_type').attr('disabled', false);
+            jQuery('#bluepay_payment_cc_expire').attr('disabled', false);
+            jQuery('#bluepay_payment_token').attr('disabled', false);
+            jQuery('#bluepay_payment_ach_account_type').attr('disabled', false);
+            jQuery('#bluepay_payment_ach_account').attr('disabled', false);
+            jQuery('#bluepay_payment_ach_routing').attr('disabled', false);
+            jQuery('#bluepay_payment_iframe').attr('disabled', false);
+            jQuery('#bluepay_payment_result').attr('disabled', false);
+            jQuery('#bluepay_payment_message').attr('disabled', false);
+            var iframePaymentFields = '';
+        function initIframe() {
+                    var iframeFields = "&AMOUNT=" + window.grandTotal +
+                    "&PAYMENT_TYPE=" + jQuery('#bluepay_payment_payment_type').val() +
+                    "&TRANSACTION_TYPE=" + window.transType +
+                    "&NAME1=" + encodeURIComponent(window.firstName) +
+                    "&NAME2=" + encodeURIComponent(window.lastName) +
+                    "&COMPANY_NAME=" + encodeURIComponent(window.companyName) +
+                    "&PHONE=" + encodeURIComponent(window.phone) +
+                    "&EMAIL=" + encodeURIComponent(window.email) +
+                    "&ADDR1=" + encodeURIComponent(window.addr1) +
+                    "&ADDR2=" + encodeURIComponent(window.addr2) +
+                    "&CITY=" + encodeURIComponent(window.city) +
+                    "&STATE=" + window.state +
+                    "&ZIPCODE=" + window.zip +
+                    "&MERCHANT=" + window.accountId + 
+                    "&TAMPER_PROOF_SEAL=" + window.tps +
+                    "&TPS_DEF=" + window.tpsDef +
+                    "&USE_CVV2=" + window.useCvv2 +
+                    "&MODE=" + window.transMode;
+                jQuery("#iframe").attr('src', window.iframeUrl + iframeFields + iframePaymentFields);
+                jQuery("#iframe").height(230);
+                jQuery("#iframe").width(600);
+        }
+        function getStoredAccountsValue() {
+            jQuery('#bluepay_payment_stored_acct')
+                    .append(jQuery("<option></option>")
+                    .attr("value",'')
+                    .text("--")); 
+                    jQuery.each(window.storedAccounts, function(key, value) {   
+                        jQuery('#bluepay_payment_stored_acct')
+                            .append(jQuery("<option></option>")
+                    .attr("value",key)
+                    .val(value.value)
+                    .text(value.label)); 
+                    });
+        }
+        getStoredAccountsValue();
+        initIframe();
+
+        jQuery('#bluepay_payment_payment_type').change(function() {
+            window.paymentType = jQuery(this).val();
+            initIframe();
+        });
+
+        jQuery('#bluepay_payment_stored_acct').change(function() {
+            if (!jQuery('#bluepay_payment_stored_acct option:selected').text().split('-')[1].match("eCheck")) {
+                jQuery('#bluepay_payment_payment_type').val('CC');
+                window.transType = "<?php echo $method->getConfigData('payment_action')?>" == 'authorize' ? 'AUTH' : 'SALE';
+                iframePaymentFields = "&PAYMENT_TYPE=CREDIT" + 
+                    "&CC_NUM=" + jQuery('#bluepay_payment_stored_acct option:selected').text().substring(0, jQuery('#bluepay_payment_stored_acct option:selected').text().indexOf('-')) +
+                    "&CARD_EXPIRE=" + jQuery('#bluepay_payment_stored_acct option:selected').text().split('[')[1].split('/')[0] + jQuery('#bluepay_payment_stored_acct option:selected').text().split('[')[1].split('/')[1].split([']'])[0] +
+                    "&RRNO=" + jQuery('#bluepay_payment_stored_acct option:selected').val() +
+                    "&ACH_ACCOUNT_TYPE=C" +
+                    "&ACH_ACCOUNT="
+                    "&ACH_ROUTING=";
+            } else {
+                jQuery('#bluepay_payment_payment_type').val('ACH');
+                window.transType = "SALE";
+                iframePaymentFields = "&PAYMENT_TYPE=ACH" +
+                    "&CC_NUM=" +
+                    "&CC_EXPIRE=" +
+                    "&RRNO=" + jQuery('#bluepay_payment_stored_acct option:selected').val() +
+                    "&ACH_ACCOUNT_TYPE=" + jQuery('#bluepay_payment_stored_acct option:selected').text().split(':')[0] +
+                    "&ACH_ACCOUNT=" + jQuery('#bluepay_payment_stored_acct option:selected').text().split('-')[0].split(':')[2] +
+                    "&ACH_ROUTING=" + jQuery('#bluepay_payment_stored_acct option:selected').text().split(':')[1];
+            }
+            initIframe();
+            iframePaymentFields = '';
+        });
+    });
+    });
+</script>
+<!--<head>
+<link rel="stylesheet" href="http://10.10.49.181/styles-l.css">
+  <link rel="stylesheet" href="http://10.10.49.181/print.css">
+  <link rel="stylesheet" href="http://10.10.49.181/styles-m.css">
+</head>-->
+<fieldset class="admin__fieldset payment-method" id="payment_form_<?php /* @noEscape */ echo $code; ?>"
+          style="display:none">
+</fieldset>
+<div class="admin__field-control">
+            <input type="hidden" id="<?php /* @noEscape */ echo $code; ?>_cc_number" name="payment[cc_number]"
+                   value="<?php /* @noEscape */ echo $block->getInfoData('cc_number'); ?>"/>
+</div>
+<div class="admin__field-control">
+            <input type="hidden" id="<?php /* @noEscape */ echo $code; ?>_cc_type" name="payment[cc_type]"
+                   value="<?php /* @noEscape */ echo $block->getInfoData('cc_type'); ?>"/>
+</div>
+<div class="admin__field-control">
+            <input type="hidden" id="<?php /* @noEscape */ echo $code; ?>_cc_expire" name="payment[cc_expire]"
+                   value="<?php /* @noEscape */ echo $block->getInfoData('cc_expire'); ?>"/>
+</div>
+<div class="admin__field-control">
+            <input type="hidden" id="<?php /* @noEscape */ echo $code; ?>_token" name="payment[token]"
+                   value="<?php /* @noEscape */ echo $block->getInfoData('token'); ?>"/>
+</div>
+<div class="admin__field-control">
+            <input type="hidden" id="<?php /* @noEscape */ echo $code; ?>_ach_account_type" name="payment[ach_account_type]"
+                   value="<?php /* @noEscape */ echo $block->getInfoData('ach_account_type'); ?>"/>
+</div>
+<div class="admin__field-control">
+            <input type="hidden" id="<?php /* @noEscape */ echo $code; ?>_ach_account" name="payment[ach_account]"
+                   value="<?php /* @noEscape */ echo $block->getInfoData('ach_account'); ?>"/>
+</div>
+<div class="admin__field-control">
+            <input type="hidden" id="<?php /* @noEscape */ echo $code; ?>_ach_routing" name="payment[ach_routing]"
+                   value="<?php /* @noEscape */ echo $block->getInfoData('ach_routing'); ?>"/>
+</div>
+<div class="admin__field-control">
+            <input type="hidden" id="<?php /* @noEscape */ echo $code; ?>_iframe" name="payment[iframe]" value="1"/>
+</div>
+<div class="admin__field-control">
+            <input type="hidden" id="<?php /* @noEscape */ echo $code; ?>_result" name="payment[result]" value="1"/>
+</div>
+<div class="admin__field-control">
+            <input type="hidden" id="<?php /* @noEscape */ echo $code; ?>_message" name="payment[message]" value="1"/>
+</div>
+<div class="field type" id="bluepay_payment_payment_type_div">
+        <div class="control">
+                <label for="PAYMENT_TYPE" class="label">
+                    <span>Payment Type</span>
+                </label>
+                <div class="control">
+                    <div class="fields group group-2">
+                        <div class="field no-label month">
+                            <div class="control">
+                                <select name="PAYMENT_TYPE"
+                                        class="select select-month"
+                                        style="width: 260px"
+                                        id="bluepay_payment_payment_type"
+                                        data-bind="attr: { id: 'bluepay_payment_payment_type'}, 
+                                        value: paymentType">
+                                        <option selected value="CC">Credit Card</option>
+                                        <option value="ACH">eCheck</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+        </div>
+    <br />
+    </div>
+    <div class="field date required" id="bluepay_payment_stored_acct_div" data-bind="attr: {id: 'bluepay_payment_stored_acct_div'}">
+                <label data-bind="attr: {for: 'bluepay_payment_stored_acct'}" class="label">
+                    <span>Stored Payment Account</span>
+                </label>
+                <div class="control">
+                    <div class="fields group group-2">
+                        <div class="field no-label month">
+                            <div class="control">
+                                <select name="payment[stored_acct]"
+                                        style="width: 260px"
+                                        class="select select-month"
+                                        id="bluepay_payment_stored_acct"
+                                        data-bind="attr: { id: 'bluepay_payment_stored_acct'},
+                                        options: getStoredAccountsValue(),
+                                        optionsValue: 'value',
+                                        optionsText: 'label',
+                                        optionsCaption: $t('--Use a new stored payment--'),
+                                        value: storedPaymentAccounts
+                                        ">
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+    <br />        
+    </div>
+<iframe id="iframe" frameBorder="0"></iframe>

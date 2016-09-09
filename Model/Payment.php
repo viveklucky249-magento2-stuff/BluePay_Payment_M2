@@ -113,6 +113,8 @@ class Payment extends \Magento\Payment\Model\Method\Cc
 
     private $request;
 
+    private $customerSession;
+
     /**
      * Request factory
      *
@@ -131,6 +133,7 @@ class Payment extends \Magento\Payment\Model\Method\Cc
         \Magento\Framework\Model\Context $context,
         \Magento\Framework\Registry $registry,
         \Magento\Customer\Model\CustomerRegistry $customerRegistry,
+        \Magento\Customer\Model\Session $customerSession,
         \Magento\Framework\Api\ExtensionAttributesFactory $extensionFactory,
         \Magento\Framework\Api\AttributeValueFactory $customAttributeFactory,
         \Magento\Payment\Helper\Data $paymentData,
@@ -150,6 +153,7 @@ class Payment extends \Magento\Payment\Model\Method\Cc
         array $data = []
     ) {
         $this->customerRegistry = $customerRegistry;
+        $this->customerSession = $customerSession;
         $this->checkoutCartHelper = $checkoutCartHelper;
         $this->checkoutSession = $checkoutSession;
         $this->generic = $generic;
@@ -391,6 +395,8 @@ $payment->setCcLast4(substr($result->getCcNumber(), -4));
      */
     public function _buildRequest(\Magento\Payment\Model\InfoInterface $payment)
     {
+        if ($payment->getIframe() == "1")
+            return $payment;
         $order = $payment->getOrder();
         $this->setStore($order->getStoreId());
         $request = $this->requestFactory->create();
@@ -486,15 +492,9 @@ $payment->setCcLast4(substr($result->getCcNumber(), -4));
 
     public function _postRequest(\Magento\Framework\DataObject $request)
     {
+        $info = $this->getInfoInstance();
         $result = $this->responseFactory->create();
-        $postArray = $this->getRequest();
-        $postResult = ($this->getRequest() !== null) ? $this->getRequest()->getPost("Result") : null;
-
-    if (isset($postArray) && ($this->getRequest()->getPost("?Result")) !== null) {
-        $this->getRequest()->setPost("Result", $this->getRequest()->getPost("?Result"));
-        $this->getRequest()->setPost("?Result", null);
-    }
-    if (!isset($postArray) || ($postResult === null)) {
+        if ($info->getIframe() != "1") {
             $client = $this->zendClientFactory->create();
             $uri = self::CGI_URL;
             $client->setUri($uri ? $uri : self::CGI_URL);
@@ -566,17 +566,15 @@ $payment->setCcLast4(substr($result->getCcNumber(), -4));
                 $this->_debug($debugData);
             }
     } else {
-        $result->setResult($this->getRequest()->getPost("Result"));
-        $result->setMessage($this->getRequest()->getPost("MESSAGE"));
-        $result->setRrno($this->getRequest()->getPost("RRNO"));
-        $result->setCcNumber($this->getRequest()->getPost("PAYMENT_ACCOUNT"));
-        $result->setCcExpMonth($this->getRequest()->getPost("CC_EXPIRES_MONTH"));
-        $result->setCcExpYear($this->getRequest()->getPost("CC_EXPIRES_YEAR"));
-        $result->setPaymentType($$this->getRequest()->getPost("PAYMENT_TYPE"));
-        $result->setCardType($this->getRequest()->getPost("CARD_TYPE"));
-        $result->setAuthCode($this->getRequest()->getPost("AUTH_CODE"));
-        $result->setAvs($this->getRequest()->getPost("AVS"));
-        $result->setCvv2($this->getRequest()->getPost("CVV2"));
+        $result->setResult($info->getResult());
+        $result->setMessage($info->getMessage());
+        $result->setRrno($info->getToken());
+        $result->setCcNumber($info->getCcNumber());
+        $result->setPaymentType($info->getPaymentType());
+        $result->setCardType($info->getCardType());
+        $result->setAuthCode($info->getAuthCode());
+        $result->setAvs($info->getAvs());
+        $result->setCvv2($info->getCvv2());
         $this->assignBluePayToken($result->getRrno());
     }
         if ($result->getResult() == 'APPROVED') {
@@ -674,6 +672,8 @@ $payment->setCcLast4(substr($result->getCcNumber(), -4));
     public function validate()
     {
         $info = $this->getInfoInstance();
+        if ($info->getIframe())
+            return;
         if ($info->getToken() == '' && $info->getPaymentType() == 'ACH') {
             if ($info->getEcheckAcctNumber() == '') {
                 throw new \Magento\Framework\Exception\LocalizedException(__("Invalid account number."));
@@ -700,7 +700,7 @@ $payment->setCcLast4(substr($result->getCcNumber(), -4));
         if ($info->getPaymentType() == 'CC' &&  $ccNumber != '' &&
             ($info->getCcExpMonth() == '' || $info->getCcExpYear() == '')) {
             throw new \Magento\Framework\Exception\LocalizedException(__("Invalid card expiration date."));
-        } elseif ($info->getPaymentType() == 'CC' &&  $this->getConfigData('useccv') == '1' &&
+        } elseif (!$info->getIframe() && $info->getPaymentType() == 'CC' &&  $this->getConfigData('useccv') == '1' &&
             ($info->getCcCid() == '' || strlen($info->getCcCid()) < 3
             || strlen($info->getCcCid()) > 4)) {
             throw new \Magento\Framework\Exception\LocalizedException(__("Invalid Card Verification Number."));
