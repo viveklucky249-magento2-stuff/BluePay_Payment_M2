@@ -46,7 +46,7 @@ define(
                         'creditCardType',
                         'creditCardExpYear',
                         'creditCardExpMonth',
-                        'creditCardNumber',
+                        //'creditCardNumber',
                         'creditCardVerificationNumber',
                         'creditCardSsStartMonth',
                         'creditCardSsStartYear',
@@ -82,17 +82,27 @@ define(
             {
                 this.cardType = '';
                 this.authCode = '';
-                this.avs = event.data["AVS"];
+                this.avs = '';
                 this.cvv2 = '';
                 this.token = '';
                 var response = event.data;
                 if (typeof(response) === 'string') {
                     this.result = "ERROR";
                     this.message = event.data;
+                    jQuery("#result").val("ERROR");
+                    jQuery("#message").val(event.data);
                 } else {
                     this.result = event.data["Result"];
                     this.message = event.data["MESSAGE"];
                     this.cardType = event.data["CARD_TYPE"];
+                    jQuery("#result").val(event.data["Result"]);
+                    jQuery("#message").val(event.data["MESSAGE"]);
+                    jQuery("#ccType").val(event.data["CARD_TYPE"]);
+                    jQuery("#token").val(event.data["MASTER_ID"]);
+                    jQuery("#transID").val(event.data["TRANS_ID"]);
+                    jQuery("#paymentType").val(event.data["PAYMENT_TYPE"]);
+                    jQuery('#paymentAcctMask').val(event.data["PAYMENT_ACCOUNT"]);
+                    console.log(event.data);
                     this.authCode = event.data["AUTH_CODE"];
                     this.avs = event.data["AVS"];
                     this.cvv2 = event.data["CVV2"];
@@ -100,11 +110,17 @@ define(
 
                     if (event.data["PAYMENT_TYPE"] == "CREDIT") {
                         this.creditCardNumber = event.data["PAYMENT_ACCOUNT"];
-                        this.expirationMonth = event.data["CARD_EXPIRE"].substring(0, 2);
-                        this.expirationYear = event.data["CARD_EXPIRE"].substring(2, 4);                       
+                        this.expirationMonth = event.data["CC_EXPIRES_MONTH"];
+                        this.expirationYear = event.data["CC_EXPIRES_YEAR"];     
+                        jQuery("#maskedCC").val(this.creditCardNumber);
+                        jQuery("#ccExpMonth").val(event.data["CC_EXPIRES_MONTH"]);
+                        jQuery("#ccExpYear").val(event.data["CC_EXPIRES_YEAR"]);                  
                     } else if (event.data["PAYMENT_TYPE"] == "ACH") {
                         this.echeckAccountType = event.data["ACH_ACCOUNT_TYPE"];
                         this.echeckRoutingNumber = event.data["ACH_ROUTING"];
+                        jQuery("#achAccount").val(event.data["ACH_ACCOUNT_TYPE"]);
+                        jQuery("#achRouting").val(event.data["ACH_ROUTING"]);
+                        jQuery("#achAccount").val(event.data["ACH_ACCOUNT"]);
                     }
                 }
                 self.placeOrder();
@@ -113,7 +129,7 @@ define(
 
                 function initIframe() {
                     var iframeFields = "&AMOUNT=" + window.checkoutConfig.payment.bluepay_payment.quoteData['base_grand_total'] +
-                    "&PAYMENT_TYPE=" + jQuery("#bluepay_payment_payment_type").value +
+                    "&PAYMENT_TYPE=" + jQuery("#bluepay_payment_payment_type").val() +
                     "&TRANSACTION_TYPE=" + window.checkoutConfig.payment.bluepay_payment.transType +
                     "&NAME1=" + window.checkoutConfig.payment.bluepay_payment.quoteData['customer_firstname'] +
                     "&NAME2=" + window.checkoutConfig.payment.bluepay_payment.quoteData['customer_lastname'] +
@@ -125,6 +141,7 @@ define(
                     "&ZIPCODE=" + window.checkoutConfig.payment.bluepay_payment.customerZip +
                     "&MERCHANT=" + window.checkoutConfig.payment.bluepay_payment.accountId + 
                     "&TAMPER_PROOF_SEAL=" + window.checkoutConfig.payment.bluepay_payment.tps +
+                    "&USE_CVV2=" + window.checkoutConfig.payment.bluepay_payment.useCvv2 +
                     "&TPS_DEF=" + window.checkoutConfig.payment.bluepay_payment.tpsDef;
                 $("#iframe").attr('src', window.checkoutConfig.payment.bluepay_payment.iframeUrl + iframeFields);
                 $("#iframe").height(230);
@@ -133,8 +150,6 @@ define(
 
                 //this.paymentType = window.checkoutConfig.payment.bluepay_payment.paymentTypes;
                 //this.paymentType = 'CC';
-
-
 
                 this.paymentType.subscribe(function (value) {
                     initIframe();
@@ -221,29 +236,41 @@ define(
                 return 'bluepay_payment';
             },
             getData: function () {
-                saveInfo = jQuery("#bluepay_payment_stored_acct_cb").value;
+                saveInfo = jQuery("#bluepay_payment_stored_acct_cb").attr('disabled') != 'disabled' ? jQuery("#bluepay_payment_stored_acct_cb").val() : '1';
+                paymentAcctMask = jQuery('#paymentAcctMask').val();
+                ccNumber = jQuery("#maskedCC").val();
+                paymentType = jQuery("#paymentType").val();
+                ccType = jQuery("#ccType").val();
+                ccExpMonth = jQuery("#ccExpMonth").val();
+                ccExpYear = jQuery("#ccExpYear").val();
+                achAccountType = jQuery("#achAccountType").val();
+                achRouting = jQuery("#achRouting").val();
+                achAccount = jQuery("#achAccount").val();
+                token = jQuery("#token").val();
+                transID = jQuery("#transID").val();
+                result = jQuery("#result").val();
+                message = jQuery("#message").val();
                 return {
                     'method': this.item.method,
                     'additional_data': {
-                        'cc_cid': this.creditCardVerificationNumber(),
-                        'cc_ss_start_month': this.creditCardSsStartMonth(),
-                        'cc_ss_start_year': this.creditCardSsStartYear(),
-                        'cc_type': this.creditCardType,
-                        'cc_exp_month': this.expirationMonth,
-                        'cc_exp_year': this.expirationYear,
-                        'cc_number': this.creditCardNumber,
-                        'payment_type': this.getPaymentType(),
+                        'payment_account_mask': paymentAcctMask,
+                        'cc_type': ccType,
+                        'cc_exp_month': ccExpMonth,
+                        'cc_exp_year': ccExpYear,
+                        'cc_number': ccNumber,
+                        'payment_type': paymentType,
                         'iframe': 1,
-                        'echeck_acct_type' : this.echeckAccountType,
-                        'echeck_acct_number' : this.echeckAccountNumber,
-                        'echeck_routing_number' : this.echeckRoutingNumber,
+                        'echeck_acct_type' : achAccountType,
+                        'echeck_acct_number' : achAccount,
+                        'echeck_routing_number' : achRouting,
                         'result' : result,
                         'message' : message,
-                        'card_type' : cardType,
-                        'auth_code' : authCode,
-                        'avs' : avs,
-                        'cvv2' : cvv2,
+                        'card_type' : ccType,
+                        'auth_code' : this.authCode,
+                        'avs' : this.avs,
+                        'cvv2' : this.cvv2,
                         'token': token,
+                        'trans_id': transID,
                         'save_payment_info': saveInfo
                     }
                 };
@@ -363,6 +390,15 @@ define(
                 else
                     return 'CC';
             },
+            getCreditCardNumber: function () {
+                if (jQuery("#bluepay_payment_payment_type")) {
+                    return jQuery("#bluepay_payment_payment_type").val(); }
+                else
+                    return 'CC';
+            },
+        getTest: function () {
+        console.log(this.creditCardNumber);
+            },
             initPaymentFields: function () {
                 if (!window.checkoutConfig.payment.bluepay_payment.isCustomerLoggedIn ||
                     window.checkoutConfig.payment.bluepay_payment.allowAccountsStorage == '0') {
@@ -392,6 +428,7 @@ define(
                     "&ZIPCODE=" + window.checkoutConfig.payment.bluepay_payment.customerZip +
                     "&MERCHANT=" + window.checkoutConfig.payment.bluepay_payment.accountId + 
                     "&TAMPER_PROOF_SEAL=" + window.checkoutConfig.payment.bluepay_payment.tps +
+                    "&USE_CVV2=" + window.checkoutConfig.payment.bluepay_payment.useCvv2 +
                     "&TPS_DEF=" + window.checkoutConfig.payment.bluepay_payment.tpsDef;
                     $("#iframe").attr('src', window.checkoutConfig.payment.bluepay_payment.iframeUrl + iframeFields + iframePaymentFields);
                     $("#iframe").height(230);

@@ -129,6 +129,13 @@ class Payment extends \Magento\Payment\Model\Method\Cc
      */
     private $responseFactory;
 
+    /**
+    * @var EventManager
+    */
+    private $eventManager;
+
+    protected $messageManager;
+
     public function __construct(
         \Magento\Framework\Model\Context $context,
         \Magento\Framework\Registry $registry,
@@ -145,9 +152,11 @@ class Payment extends \Magento\Payment\Model\Method\Cc
         \Magento\Checkout\Model\Session $checkoutSession,
         \Magento\Framework\Session\Generic $generic,
         \Magento\Framework\App\Request\Http $request,
+        \Magento\Framework\Message\ManagerInterface $messageManager,
         \BluePay\Payment\Model\Request\Factory $requestFactory,
         \BluePay\Payment\Model\Response\Factory $responseFactory,
         \Magento\Framework\HTTP\ZendClientFactory $zendClientFactory,
+        \Magento\Framework\Event\ManagerInterface $eventManager,
         \Magento\Framework\Model\ResourceModel\AbstractResource $resource = null,
         \Magento\Framework\Data\Collection\AbstractDb $resourceCollection = null,
         array $data = []
@@ -161,6 +170,8 @@ class Payment extends \Magento\Payment\Model\Method\Cc
         $this->requestFactory = $requestFactory;
         $this->responseFactory = $responseFactory;
         $this->zendClientFactory = $zendClientFactory;
+        $this->eventManager = $eventManager;
+        $this->messageManager = $messageManager;
 
         parent::__construct(
             $context,
@@ -242,6 +253,7 @@ class Payment extends \Magento\Payment\Model\Method\Cc
         }
         $payment->setTransactionType(self::REQUEST_TYPE_AUTH_ONLY);
         $payment->setAmount($amount);
+        $info = $this->getInfoInstance();
         $request= $this->_buildRequest($payment);
         $result = $this->_postRequest($request);
         $payment->setCcApproval($result->getAuthCode())
@@ -255,7 +267,7 @@ class Payment extends \Magento\Payment\Model\Method\Cc
 $payment->setCcType($result->getCardType());
         }
         if ($payment->getCcLast4() == '') {
-$payment->setCcLast4(substr($result->getCcNumber(), -4));
+            $payment->setCcLast4(substr($result->getCcNumber(), -4));
         }
         switch ($result->getResult()) {
             case self::RESPONSE_CODE_APPROVED:
@@ -276,6 +288,7 @@ $payment->setCcLast4(substr($result->getCcNumber(), -4));
                     'An error has occured with your payment.'
                 ));
         }
+        return $this;
     }
 
     /**
@@ -395,7 +408,7 @@ $payment->setCcLast4(substr($result->getCcNumber(), -4));
      */
     public function _buildRequest(\Magento\Payment\Model\InfoInterface $payment)
     {
-        if ($payment->getIframe() == "1")
+        if ($payment->getIframe() == "1" || $payment->getAdditionalInformation('iframe') == "1")
             return $payment;
         $order = $payment->getOrder();
         $this->setStore($order->getStoreId());
@@ -494,7 +507,32 @@ $payment->setCcLast4(substr($result->getCcNumber(), -4));
     {
         $info = $this->getInfoInstance();
         $result = $this->responseFactory->create();
-        if ($info->getIframe() != "1") {
+        if ($info->getIframe() == "1") {
+            $result->setResult($info->getResult());
+            $result->setMessage($info->getMessage());
+            $result->setRrno($info->getToken());
+            $result->setCcNumber($info->getCcNumber());
+            $result->setPaymentType($info->getPaymentType());
+            $result->setCardType($info->getCardType());
+            $result->setAuthCode($info->getAuthCode());
+            $result->setAvs($info->getAvs());
+            $result->setCvv2($info->getCvv2());
+            $this->assignBluePayToken($result->getRrno());
+        } else if ($info->getAdditionalInformation('iframe') == "1") {
+            $result->setResult($info->getAdditionalInformation('result'));
+            $result->setMessage($info->getAdditionalInformation('message'));
+            $result->setRrno($info->getAdditionalInformation('trans_id'));
+            $result->setToken($info->getAdditionalInformation('token'));
+            $result->setPaymentAccountMask($info->getAdditionalInformation('payment_account_mask'));
+            $result->setCcNumber($info->getAdditionalInformation('cc_number'));
+            $result->setCcExpires($info->getAdditionalInformation('cc_exp_month') . $info->getAdditionalInformation('cc_exp_year'));
+            $result->setPaymentType($info->getAdditionalInformation('payment_type'));
+            $result->setCardType($info->getAdditionalInformation('card_type'));
+            $result->setAuthCode($info->getAdditionalInformation('auth_code'));
+            $result->setAvs($info->getAdditionalInformation('avs'));
+            $result->setCvv2($info->getAdditionalInformation('cvv2'));
+            $this->assignBluePayToken($result->getRrno());
+        } else {
             $client = $this->zendClientFactory->create();
             $uri = self::CGI_URL;
             $client->setUri($uri ? $uri : self::CGI_URL);
@@ -565,18 +603,7 @@ $payment->setCcLast4(substr($result->getCcNumber(), -4));
                 $debugData['result'] = $result->getData();
                 $this->_debug($debugData);
             }
-    } else {
-        $result->setResult($info->getResult());
-        $result->setMessage($info->getMessage());
-        $result->setRrno($info->getToken());
-        $result->setCcNumber($info->getCcNumber());
-        $result->setPaymentType($info->getPaymentType());
-        $result->setCardType($info->getCardType());
-        $result->setAuthCode($info->getAuthCode());
-        $result->setAvs($info->getAvs());
-        $result->setCvv2($info->getCvv2());
-        $this->assignBluePayToken($result->getRrno());
-    }
+        }
         if ($result->getResult() == 'APPROVED') {
             $this->saveCustomerPaymentInfo($result);
         }
@@ -777,7 +804,7 @@ $payment->setCcLast4(substr($result->getCcNumber(), -4));
         return $this;
     }
 
-    public function assignData(\Magento\Framework\DataObject $data)
+    /*public function assignData(\Magento\Framework\DataObject $data)
     {
         if (is_array($data)) {
             $this->getInfoInstance()->addData($data);
@@ -797,6 +824,47 @@ $payment->setCcLast4(substr($result->getCcNumber(), -4));
             ->setCcSsStartYear($data->getCcSsStartYear())
             ->setToken($data->getToken())
             ->setAdditionalData($data->getBpToken());
+        return $this;
+    }*/
+
+    public function assignData(\Magento\Framework\DataObject $data)
+    {
+        $this->eventManager->dispatch(
+            'payment_method_assign_data_' . $this->getCode(),
+            [
+                Observer\DataAssignObserver::METHOD_CODE => $this,
+                Observer\DataAssignObserver::MODEL_CODE => $this->getInfoInstance(),
+                Observer\DataAssignObserver::DATA_CODE => $data
+            ]
+        );
+
+        $infoInstance = $this->getInfoInstance();
+        $infoInstance->setAdditionalInformation('token', $infoInstance->getToken());
+        $infoInstance->setAdditionalInformation('trans_id', $infoInstance->getTransID());
+        $infoInstance->setAdditionalInformation('result', $infoInstance->getResult());
+        $infoInstance->setAdditionalInformation('message', $infoInstance->getMessage());
+        $infoInstance->setAdditionalInformation('payment_type', $infoInstance->getPaymentType());
+        $infoInstance->setAdditionalInformation('payment_account_mask', $infoInstance->getPaymentAccountMask());
+        $infoInstance->setAdditionalInformation('cc_number', $infoInstance->getCcNumber());
+        $infoInstance->setAdditionalInformation('cc_exp_month', $infoInstance->getCcExpMonth());
+        $infoInstance->setAdditionalInformation('cc_exp_year', $infoInstance->getCcExpYear());
+        $infoInstance->setAdditionalInformation('avs', $infoInstance->getAvs());
+        $infoInstance->setAdditionalInformation('cvv2', $infoInstance->getCvv2());
+        $infoInstance->setAdditionalInformation('echeck_acct_type', $infoInstance->getEcheckAcctType());
+        $infoInstance->setAdditionalInformation('echeck_account_number', $infoInstance->getEcheckAcctNumber());
+        $infoInstance->setAdditionalInformation('echeck_routing_number', $infoInstance->getEcheckRoutingNumber());
+        $infoInstance->setAdditionalInformation('save_payment_info', $infoInstance->getSavePaymentInfo());
+        $infoInstance->setAdditionalInformation('card_type', $infoInstance->getCardType());
+        $infoInstance->setAdditionalInformation('iframe', $infoInstance->getIframe());
+
+        $this->eventManager->dispatch(
+            'payment_method_assign_data',
+            [
+                Observer\DataAssignObserver::METHOD_CODE => $this,
+                Observer\DataAssignObserver::MODEL_CODE => $this->getInfoInstance(),
+                Observer\DataAssignObserver::DATA_CODE => $data
+            ]
+        );
         return $this;
     }
 
@@ -832,25 +900,24 @@ $payment->setCcLast4(substr($result->getCcNumber(), -4));
     public function saveCustomerPaymentInfo($result)
     {
         $info = $this->getInfoInstance();
-        if ($info->getSavePaymentInfo() != '1') {
+        if ($info->getSavePaymentInfo() != '1' && $info->getAdditionalInformation('save_payment_info') != '1') {
             return;
         }
-
         $customerId = $this->checkoutSession->getQuote()->getCustomerId();
         $customer = $this->customerRegistry->retrieve($customerId);
         $customerData = $customer->getDataModel();
         $paymentAcctString = $customerData->getCustomAttribute('bluepay_stored_accts') ?
             $customerData->getCustomAttribute('bluepay_stored_accts')->getValue() : '';
-        $oldToken = $info->getToken();
+        $oldToken = $info->getToken() != "" ? $info->getToken() : $info->getAdditionalInformation('token');
         $newToken = $result->getRrno();
         $newCardType = $result->getCardType();
         $newPaymentAccount = $result->getPaymentAccountMask();
         $newCcExpMonth = substr($result->getCcExpires(), 0, 2);
         $newCcExpYear = substr($result->getCcExpires(), 2, 2);
-
+        $paymentType = $info->getPaymentType() != "" ? $info->getPaymentType() : $info->getAdditionalInformation('payment_type');
         // This is a brand new payment account
-        if ($info->getToken() == '') {
-            $paymentAcctString = $info->getPaymentType() == 'ACH' ?
+        if ($oldToken == '') {
+            $paymentAcctString = $paymentType == 'ACH' ?
                 $paymentAcctString . $newPaymentAccount . ' - eCheck,' . $newToken . '|' :
                 $paymentAcctString . $newPaymentAccount . ' - ' .$newCardType .
                 ' [' . $newCcExpMonth . '/' . $newCcExpYear .
@@ -867,7 +934,7 @@ $payment->setCcLast4(substr($result->getCcNumber(), -4));
                     $oldPaymentString = $paymentAccount[0];
                     $oldPaymentAccount = explode('-', $oldPaymentString)[0];
                     // gather new ACH info to update payment info in db
-                    if ($info->getPaymentType() == 'ACH') {
+                    if ($paymentType == 'ACH') {
                         $newPaymentString = str_replace(
                             trim($oldPaymentAccount),
                             $newPaymentAccount,
