@@ -16,6 +16,7 @@
                 <trans_mode>TEST</trans_mode>
                 <test>1</test>
                 <useccv>1</useccv>
+                <tokenization>1</tokenization>
                 <!--<usecvv_backend>0</usecvv_backend>-->
                 <allowspecific>0</allowspecific>
                 <currency>USD</currency>

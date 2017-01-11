@@ -116,7 +116,7 @@
             <div class="primary">
                 <button class="action primary checkout"
                         type="submit"
-                        onclick="return test();"
+                        onclick="return submitOrder();"
                         data-bind="
                         attr: {title: $t('Place Order'),
                         id: 'submitBtn'},
@@ -130,4 +130,4 @@
         </div>
     </div>
 </div>
-<div data-bind='template: { afterRender: initIframe }'> </div>
+<div data-bind='template: { afterRender: initPaymentFields,initIframe }'> </div>

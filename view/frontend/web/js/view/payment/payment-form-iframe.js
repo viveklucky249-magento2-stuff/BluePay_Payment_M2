@@ -102,7 +102,6 @@ define(
                     jQuery("#transID").val(event.data["TRANS_ID"]);
                     jQuery("#paymentType").val(event.data["PAYMENT_TYPE"]);
                     jQuery('#paymentAcctMask').val(event.data["PAYMENT_ACCOUNT"]);
-                    console.log(event.data);
                     this.authCode = event.data["AUTH_CODE"];
                     this.avs = event.data["AVS"];
                     this.cvv2 = event.data["CVV2"];
@@ -396,15 +395,13 @@ define(
                 else
                     return 'CC';
             },
-        getTest: function () {
-        console.log(this.creditCardNumber);
-            },
             initPaymentFields: function () {
                 if (!window.checkoutConfig.payment.bluepay_payment.isCustomerLoggedIn ||
                     window.checkoutConfig.payment.bluepay_payment.allowAccountsStorage == '0') {
                     jQuery("#bluepay_payment_stored_acct_div").hide();
                     jQuery("#bluepay_payment_stored_acct_cb_div").hide();
                 }
+                alert(window.checkoutConfig.payment.bluepay_payment.paymentTypes);
                 if (window.checkoutConfig.payment.bluepay_payment.paymentTypes == 'CC') {
                     jQuery("#bluepay_payment_payment_type").val('CC');
                     jQuery("#bluepay_payment_payment_type_div").hide();
@@ -462,7 +459,7 @@ function showHidePaymentFields()
     }
 }
 
-function test()
+function submitOrder()
 {
     jQuery('#submitBtn').attr('disabled',true);
     var win = document.getElementById("iframe").contentWindow;

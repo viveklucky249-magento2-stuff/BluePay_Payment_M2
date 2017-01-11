@@ -3,4 +3,7 @@
     <event name="sales_order_place_after">
         <observer name="bluepay_payment_order_change_status" instance="BluePay\Payment\Model\Observer\UpdateOrderStatus" shared="false" />
     </event>
+    <event name="payment_method_assign_data_bluepay_payment">
+        <observer name="bluepay_payment_gateway_data_assign" instance="BluePay\Payment\Model\Observer\DataAssignObserver" />
+    </event>
 </config>

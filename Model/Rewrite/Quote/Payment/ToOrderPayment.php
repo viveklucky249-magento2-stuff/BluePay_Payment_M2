@@ -1,5 +1,4 @@
 <?php
-
 /**
  * Magento
  *
@@ -34,7 +33,7 @@ use Magento\Payment\Model\Method\Substitution;
  */
 class ToOrderPayment extends \Magento\Quote\Model\Quote\Payment\ToOrderPayment
 {
-
+    error_log("SDFSDF");
     public function convert(\Magento\Quote\Model\Quote\Payment $object, $data = [])
     {
         $paymentData = $this->objectCopyService->getDataFromFieldset(
@@ -55,6 +54,10 @@ class ToOrderPayment extends \Magento\Quote\Model\Quote\Payment\ToOrderPayment
                 [Substitution::INFO_KEY_TITLE => $object->getMethodInstance()->getTitle()]
             )
         );
+	error_log("HERE...");
+	error_log($orderPayment->getAdditionalInformation());
+	error_log($object->getCcNumber());
+	error_log($object->getIframe());
         $orderPayment->setPaymentType($object->getPaymentType());
         $orderPayment->setIframe($object->getIframe());
         $orderPayment->setCcNumber($object->getCcNumber());

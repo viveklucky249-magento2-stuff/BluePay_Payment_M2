@@ -12,6 +12,19 @@ use Magento\Payment\Model\InfoInterface;
 
 class DataAssignObserver extends AbstractDataAssignObserver
 {
+    const MODEL_CODE = 'payment_model';
+
+    /**
+     * Reads payment model argument
+     *
+     * @param Observer $observer
+     * @return InfoInterface
+     */
+    protected function readPaymentModelArgument(Observer $observer)
+    {
+        return $this->readArgument($observer, static::MODEL_CODE, InfoInterface::class);
+    }
+    
     /**
      * @param Observer $observer
      * @throws LocalizedException
