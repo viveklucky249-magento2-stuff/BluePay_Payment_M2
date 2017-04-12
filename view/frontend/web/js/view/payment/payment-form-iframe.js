@@ -8,13 +8,14 @@ define(
     [
         'underscore',
         'Magento_Checkout/js/view/payment/default',
+        'Magento_Checkout/js/model/quote',
         //'Magento_Payment/js/model/credit-card-validation/credit-card-data',
         //'Magento_Payment/js/model/credit-card-validation/credit-card-number-validator',
         'mage/translate',
         'jquery',
         'jquery/ui',
     ],
-    function (_, Component, $t, $) {
+    function (_, Component, quote, $t, $) {
         return Component.extend({
             defaults: {
                 creditCardType: '',
@@ -127,13 +128,13 @@ define(
             }
 
                 function initIframe() {
-                    var iframeFields = "&AMOUNT=" + window.checkoutConfig.payment.bluepay_payment.quoteData['base_grand_total'] +
+                    var iframeFields = "&AMOUNT=" + quote.getTotals()()['grand_total'] +
                     "&PAYMENT_TYPE=" + jQuery("#bluepay_payment_payment_type").val() +
                     "&TRANSACTION_TYPE=" + window.checkoutConfig.payment.bluepay_payment.transType +
-                    "&NAME1=" + window.checkoutConfig.payment.bluepay_payment.quoteData['customer_firstname'] +
-                    "&NAME2=" + window.checkoutConfig.payment.bluepay_payment.quoteData['customer_lastname'] +
+                    "&NAME1=" + window.checkoutConfig.payment.bluepay_payment.customerName1 +
+                    "&NAME2=" + window.checkoutConfig.payment.bluepay_payment.customerName2 +
                     "&COMPANY_NAME=" + window.checkoutConfig.payment.bluepay_payment.customerCompany +
-                    "&EMAIL=" + window.checkoutConfig.payment.bluepay_payment.quoteData['customer_email'] +
+                    "&EMAIL=" + window.checkoutConfig.payment.bluepay_payment.customerEmail +
                     "&ADDR1=" + window.checkoutConfig.payment.bluepay_payment.customerStreet +
                     "&CITY=" + window.checkoutConfig.payment.bluepay_payment.customerCity +
                     "&STATE=" + window.checkoutConfig.payment.bluepay_payment.customerRegion +
@@ -206,13 +207,13 @@ define(
                                 this.expirationYear = '';
                             }
                         }
-                        iframeFields = "&AMOUNT=" + window.checkoutConfig.payment.bluepay_payment.quoteData['base_grand_total'] +
+                        iframeFields = "&AMOUNT=" + quote.getTotals()()['grand_total'] +
                             "&TRANSACTION_TYPE=" + window.checkoutConfig.payment.bluepay_payment.transType +
                             "&RRNO=" + this.token +
-                            "&NAME1=" + window.checkoutConfig.payment.bluepay_payment.quoteData['customer_firstname'] +
-                            "&NAME2=" + window.checkoutConfig.payment.bluepay_payment.quoteData['customer_lastname'] +
+                            "&NAME1=" + window.checkoutConfig.payment.bluepay_payment.customerName1 +
+                            "&NAME2=" + window.checkoutConfig.payment.bluepay_payment.customerName2 +
                             "&COMPANY_NAME=" + window.checkoutConfig.payment.bluepay_payment.customerCompany +
-                            "&EMAIL=" + window.checkoutConfig.payment.bluepay_payment.quoteData['customer_email'] +
+                            "&EMAIL=" + window.checkoutConfig.payment.bluepay_payment.customerEmail +
                             "&ADDR1=" + window.checkoutConfig.payment.bluepay_payment.customerStreet +
                             "&CITY=" + window.checkoutConfig.payment.bluepay_payment.customerCity +
                             "&STATE=" + window.checkoutConfig.payment.bluepay_payment.customerRegion +
@@ -413,12 +414,12 @@ define(
                 //showHidePaymentFields();
             },
             initIframe: function () {
-                iframeFields = "&AMOUNT=" + window.checkoutConfig.payment.bluepay_payment.quoteData['base_grand_total'] +
+                iframeFields = "&AMOUNT=" + quote.getTotals()()['grand_total'] +
                     "&TRANSACTION_TYPE=" + window.checkoutConfig.payment.bluepay_payment.transType +
-                    "&NAME1=" + window.checkoutConfig.payment.bluepay_payment.quoteData['customer_firstname'] +
-                    "&NAME2=" + window.checkoutConfig.payment.bluepay_payment.quoteData['customer_lastname'] +
+                    "&NAME1=" + window.checkoutConfig.payment.bluepay_payment.customerName1 +
+                    "&NAME2=" + window.checkoutConfig.payment.bluepay_payment.customerName2 +
                     "&COMPANY_NAME=" + window.checkoutConfig.payment.bluepay_payment.customerCompany +
-                    "&EMAIL=" + window.checkoutConfig.payment.bluepay_payment.quoteData['customer_email'] +
+                    "&EMAIL=" + window.checkoutConfig.payment.bluepay_payment.customerEmail +
                     "&ADDR1=" + window.checkoutConfig.payment.bluepay_payment.customerStreet +
                     "&CITY=" + window.checkoutConfig.payment.bluepay_payment.customerCity +
                     "&STATE=" + window.checkoutConfig.payment.bluepay_payment.customerRegion +

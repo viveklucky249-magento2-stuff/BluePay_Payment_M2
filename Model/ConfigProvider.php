@@ -95,35 +95,51 @@ class ConfigProvider implements ConfigProviderInterface
                     array_push($options, $val);
                 }
         }
+        $name1 = '';
+        $name2 = '';
+        $comapny = '';
+        $street = '';
+        $city = '';
+        $state = '';
+        $zip = '';
+        $email = '';
         $customerId = $this->cart->getQuote()->getCustomerId();
-        $company = $customerId ? $this->customerRegistry->retrieve($customerId)->getDataModel()->getAddresses()[0]->getCompany() : $this->cart->getQuote()->getBillingAddress()->getCompany();
-        $street = $customerId ? $this->customerRegistry->retrieve($customerId)->getDataModel()->getAddresses()[0]->getStreet()[0] : $this->cart->getQuote()->getBillingAddress()->getStreet()[0];
-        $city = $customerId ? $this->customerRegistry->retrieve($customerId)->getDataModel()->getAddresses()[0]->getCity() : $this->cart->getQuote()->getBillingAddress()->getCity();
-        $state = $customerId ? $this->customerRegistry->retrieve($customerId)->getDataModel()->getAddresses()[0]->getRegion()->getRegionCode() : $this->cart->getQuote()->getBillingAddress()->getRegion();
-        $zip = $customerId ? $this->customerRegistry->retrieve($customerId)->getDataModel()->getAddresses()[0]->getPostCode() : $this->cart->getQuote()->getBillingAddress()->getPostCode();
-        //$customer = $this->customerRegistry->retrieve($customerId);
-        //$customerData = $customer->getDataModel();
+        if (!$customerId) {
+            $name1 = $this->session->getQuote()->getBillingAddress()->getFirstName();
+            $name2 = $this->session->getQuote()->getBillingAddress()->getLastName();
+            $company = $this->session->getQuote()->getBillingAddress()->getCompany() != null ? $this->session->getQuote()->getBillingAddress()->getCompany() : '';
+            $street = $this->session->getQuote()->getBillingAddress()->getStreet()[0];
+            $city = $this->session->getQuote()->getBillingAddress()->getCity() != null ? $this->session->getQuote()->getBillingAddress()->getCity() : '';
+            $state = $this->session->getQuote()->getBillingAddress()->getRegion();
+            $zip = $this->session->getQuote()->getBillingAddress()->getPostCode();
+            $email = $this->session->getQuote()->getBillingAddress()->getEmail();
+        } else {
+            $customer = $this->customerRegistry->retrieve($customerId);
+            $customerData = $customer->getDataModel();
+            $name1 = $customerData->getAddresses()[0]->getFirstName();
+            $name2 = $customerData->getAddresses()[0]->getLastName();
+            $company = $customerData->getAddresses()[0]->getCompany() != null ? $customerData->getAddresses()[0]->getCompany() : '';
+            $street = $customerData->getAddresses()[0]->getStreet()[0];
+            $city = $customerData->getAddresses()[0]->getCity() != null ? $customerData->getAddresses()[0]->getCity() : '';
+            $state = $customerData->getAddresses()[0]->getRegion()->getRegionCode();
+            $zip = $customerData->getAddresses()[0]->getPostCode();
+            $email = $customerData->getEmail();
+        }
 
-		$hashstr = $this->scopeConfiguration->getValue(
+        $hashstr = $this->scopeConfiguration->getValue(
             'payment/bluepay_payment/secret_key',
             \Magento\Store\Model\ScopeInterface::SCOPE_STORE
-        	) .
+            ) .
             $this->scopeConfiguration->getValue(
                 'payment/bluepay_payment/account_id',
                 \Magento\Store\Model\ScopeInterface::SCOPE_STORE
             ) .
-            $company .
-            $street .
+            $company . 
+            $street . 
             $city .
             $state .
             $zip .
-        	/*$customerData->getAddresses()[0]->getCompany() . 
-        	$customerData->getAddresses()[0]->getStreet()[0] . 
-        	$customerData->getAddresses()[0]->getCity() .
-        	$customerData->getAddresses()[0]->getRegion()->getRegionCode() .
-        	$customerData->getAddresses()[0]->getPostCode() .*/
-
-        	$this->scopeConfiguration->getValue(
+            $this->scopeConfiguration->getValue(
             'payment/bluepay_payment/trans_mode',
             \Magento\Store\Model\ScopeInterface::SCOPE_STORE
         );
@@ -178,23 +194,21 @@ class ConfigProvider implements ConfigProviderInterface
                         \Magento\Store\Model\ScopeInterface::SCOPE_STORE
                     ),
                     'quoteData' => $this->cart->getQuote()->getData(),
-                    /*'customerCompany' => $customerData->getAddresses()[0]->getCompany(),
-                    'customerStreet' => $customerData->getAddresses()[0]->getStreet()[0],
-                    'customerCity' => $customerData->getAddresses()[0]->getCity(),
-                    'customerRegion' => $customerData->getAddresses()[0]->getRegion()->getRegionCode(),
-                    'customerZip' => $customerData->getAddresses()[0]->getPostCode()*/
+                    'customerName1' => $name1,
+                    'customerName2' => $name2,
                     'customerCompany' => $company,
                     'customerStreet' => $street,
                     'customerCity' => $city,
                     'customerRegion' => $state,
-                    'customerZip' => $zip
+                    'customerZip' => $zip,
+                    'customerEmail' => $email
                 ],
                 'ccform' => [
                     'icons' => $this->getIcons(),
                     'availableTypes' => ['bluepay_payment' => $this->getCcAvailableTypes('bluepay_payment')]
                 ]
             ]
-	];
+    ];
         return $config;
     }
 
