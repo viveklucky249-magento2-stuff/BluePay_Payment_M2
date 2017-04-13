@@ -48,6 +48,8 @@ class ConfigProvider implements ConfigProviderInterface
 
     private $_customerSession;
 
+    private $session;
+
     private $storeManager;
 
     private $cart;
@@ -60,6 +62,7 @@ class ConfigProvider implements ConfigProviderInterface
         CcConfig $ccConfig,
         Source $assetSource,
         \Magento\Customer\Model\Session $customerSession,
+        \Magento\Checkout\Model\Session $session,
         \Magento\Customer\Model\CustomerRegistry $customerRegistry,
         \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfiguration,
         \Magento\Store\Model\StoreManagerInterface $storeManager,
@@ -67,6 +70,7 @@ class ConfigProvider implements ConfigProviderInterface
     ) {
         $this->ccConfig = $ccConfig;
         $this->_customerSession = $customerSession;
+        $this->session = $session;
         $this->customerRegistry = $customerRegistry;
         $this->scopeConfiguration = $scopeConfiguration;
         $this->assetSource = $assetSource;
@@ -97,7 +101,7 @@ class ConfigProvider implements ConfigProviderInterface
         }
         $name1 = '';
         $name2 = '';
-        $comapny = '';
+        $company = '';
         $street = '';
         $city = '';
         $state = '';
@@ -116,13 +120,13 @@ class ConfigProvider implements ConfigProviderInterface
         } else {
             $customer = $this->customerRegistry->retrieve($customerId);
             $customerData = $customer->getDataModel();
-            $name1 = $customerData->getAddresses()[0]->getFirstName();
-            $name2 = $customerData->getAddresses()[0]->getLastName();
-            $company = $customerData->getAddresses()[0]->getCompany() != null ? $customerData->getAddresses()[0]->getCompany() : '';
-            $street = $customerData->getAddresses()[0]->getStreet()[0];
-            $city = $customerData->getAddresses()[0]->getCity() != null ? $customerData->getAddresses()[0]->getCity() : '';
-            $state = $customerData->getAddresses()[0]->getRegion()->getRegionCode();
-            $zip = $customerData->getAddresses()[0]->getPostCode();
+            $name1 = $customerData->getAddresses() ? $customerData->getAddresses()[0]->getFirstName() : '';
+            $name2 = $customerData->getAddresses() ? $customerData->getAddresses()[0]->getLastName() : '';
+            $company = $customerData->getAddresses() && $customerData->getAddresses()[0]->getCompany() != null ? $customerData->getAddresses()[0]->getCompany() : '';
+            $street = $customerData->getAddresses() ? $customerData->getAddresses()[0]->getStreet()[0] : '';
+            $city = $customerData->getAddresses() && $customerData->getAddresses()[0]->getCity() != null ? $customerData->getAddresses()[0]->getCity() : '';
+            $state = $customerData->getAddresses() ? $customerData->getAddresses()[0]->getRegion()->getRegionCode() : '';
+            $zip = $customerData->getAddresses() ? $customerData->getAddresses()[0]->getPostCode() : '';
             $email = $customerData->getEmail();
         }
 

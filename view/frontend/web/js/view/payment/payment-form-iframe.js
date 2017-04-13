@@ -402,7 +402,6 @@ define(
                     jQuery("#bluepay_payment_stored_acct_div").hide();
                     jQuery("#bluepay_payment_stored_acct_cb_div").hide();
                 }
-                alert(window.checkoutConfig.payment.bluepay_payment.paymentTypes);
                 if (window.checkoutConfig.payment.bluepay_payment.paymentTypes == 'CC') {
                     jQuery("#bluepay_payment_payment_type").val('CC');
                     jQuery("#bluepay_payment_payment_type_div").hide();
