@@ -103,6 +103,7 @@ define(
                     jQuery("#transID").val(event.data["TRANS_ID"]);
                     jQuery("#paymentType").val(event.data["PAYMENT_TYPE"]);
                     jQuery('#paymentAcctMask').val(event.data["PAYMENT_ACCOUNT"]);
+                    console.log(event.data);
                     this.authCode = event.data["AUTH_CODE"];
                     this.avs = event.data["AVS"];
                     this.cvv2 = event.data["CVV2"];
@@ -395,6 +396,8 @@ define(
                     return jQuery("#bluepay_payment_payment_type").val(); }
                 else
                     return 'CC';
+            },
+        getTest: function () {
             },
             initPaymentFields: function () {
                 if (!window.checkoutConfig.payment.bluepay_payment.isCustomerLoggedIn ||
